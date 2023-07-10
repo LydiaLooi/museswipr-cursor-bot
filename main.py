@@ -7,6 +7,7 @@ from pytweening import easeInOutExpo, linear
 import threading
 import win32api
 
+
 # Constants for pixel coordinates and expected colors
 LEFT_PIXEL_X = 709
 LEFT_PIXEL_Y = 870
@@ -15,12 +16,6 @@ RIGHT_PIXEL_X = 1216
 RIGHT_PIXEL_Y = 870
 
 DURATION = 0.175
-
-# Create a lock object to prevent concurrent access to shared resources
-lock = threading.Lock()
-
-# Create a variable to track the mouse movement
-mouse_moving = False
 
 
 def check_pixel_color(x, y, threshold=20):
@@ -36,10 +31,6 @@ def check_pixel_color(x, y, threshold=20):
 
 
 def move_mouse(direction):
-    global mouse_moving
-    with lock:
-        mouse_moving = True
-
     current_x, current_y = win32api.GetCursorPos()  # Get current mouse position
 
     # Move the mouse with non-linear movement from the current position to the middle of the left side of the screen with randomized y-coordinate
@@ -79,8 +70,6 @@ def move_mouse(direction):
         ):
             break
         time.sleep(0.0001)
-    with lock:
-        mouse_moving = False
 
 
 # Create a function to run the pixel color checking and mouse moving in a separate thread
@@ -99,15 +88,15 @@ def check_and_move():
             print("Space bar activated!")
 
         if space_pressed:
-            if not mouse_moving and check_pixel_color(LEFT_PIXEL_X, LEFT_PIXEL_Y):
+            if check_pixel_color(LEFT_PIXEL_X, LEFT_PIXEL_Y):
                 threading.Thread(target=move_mouse("left")).start()
 
-            if not mouse_moving and check_pixel_color(RIGHT_PIXEL_X, RIGHT_PIXEL_Y):
+            if check_pixel_color(RIGHT_PIXEL_X, RIGHT_PIXEL_Y):
                 threading.Thread(target=move_mouse("right")).start()
 
 
 if __name__ == "__main__":
     print("Running...")
-
+    print(f"Total steps is: {int(DURATION * 50)}")
     # Start the check_and_move function in a separate thread
     threading.Thread(target=check_and_move).start()
