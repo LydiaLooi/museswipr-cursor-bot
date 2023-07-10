@@ -73,7 +73,8 @@ def move_mouse(direction):
                 int(current_y + (y - current_y) * ratio),
             )
         )
-        time.sleep(0.001)  # Wait a little bit to emulate the duration
+        # time.sleep(0.001)  # Wait a little bit to emulate the duration
+        # BUT, HAVING THIS HERE MEANS IT IS BLOCKING THE DETECTION!!!
 
     with lock:
         mouse_moving = False
@@ -102,30 +103,8 @@ def check_and_move():
                 threading.Thread(target=move_mouse("right")).start()
 
 
-print("Running...")
+if __name__ == "__main__":
+    print("Running...")
 
-
-# Start the check_and_move function in a separate thread
-threading.Thread(target=check_and_move).start()
-
-
-# while True:
-#     if keyboard.is_pressed("q"):
-#         # Exit the script if the Q key is pressed
-#         print("Quitting.")
-#         break
-
-#     if keyboard.is_pressed("space"):
-#         # Toggle the state of the space bar
-#         space_pressed = True
-#         print("Space bar activated!")
-
-#     if space_pressed:
-#         # Check the pixel colors when the space bar is active
-#         if check_pixel_color(LEFT_PIXEL_X, LEFT_PIXEL_Y):
-#             move_mouse_left()
-#             # time.sleep(0.01)
-
-#         if check_pixel_color(RIGHT_PIXEL_X, RIGHT_PIXEL_Y):
-#             move_mouse_right()
-#             # time.sleep(0.01)
+    # Start the check_and_move function in a separate thread
+    threading.Thread(target=check_and_move).start()
