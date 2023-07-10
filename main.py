@@ -3,7 +3,7 @@ import pyautogui
 import time
 import keyboard
 import random
-from pytweening import easeOutExpo
+from pytweening import easeInOutExpo, linear
 import threading
 import win32api
 
@@ -65,16 +65,21 @@ def move_mouse(direction):
     # Calculate the duration of movement based on the distance
     duration = DURATION
     # Perform easing on your own (pytweening's easeInCubic)
-    for t in range(int(duration * 50)):
-        ratio = easeOutExpo(t / (duration * 50))  # This might need to be adjusted
+    total_steps = int(DURATION * 50)
+    for t in range(total_steps):
+        ratio = linear(t / total_steps)
         win32api.SetCursorPos(
             (
                 int(current_x + (x - current_x) * ratio),
                 int(current_y + (y - current_y) * ratio),
             )
         )
-        # time.sleep(0.001)  # Wait a little bit to emulate the duration
-        # BUT, HAVING THIS HERE MEANS IT IS BLOCKING THE DETECTION!!!
+        if t > total_steps // 2 and (
+            check_pixel_color(LEFT_PIXEL_X, LEFT_PIXEL_Y)
+            or check_pixel_color(RIGHT_PIXEL_X, RIGHT_PIXEL_Y)
+        ):
+            break
+        time.sleep(0.001)
 
     with lock:
         mouse_moving = False
