@@ -14,7 +14,7 @@ LEFT_PIXEL_Y = 870
 RIGHT_PIXEL_X = 1216
 RIGHT_PIXEL_Y = 870
 
-DURATION = 0.15
+DURATION = 0.175
 
 # Create a lock object to prevent concurrent access to shared resources
 lock = threading.Lock()
@@ -55,7 +55,7 @@ def move_mouse(direction):
             -50, 50
         )  # Move to the two third position on the x-axis
 
-    y_move = random.randint(100, 200)
+    y_move = random.randint(125, 200)
     y_middle = screen_height // 2
     if current_y > y_middle:
         y = current_y - y_move
@@ -63,11 +63,10 @@ def move_mouse(direction):
         y = current_y + y_move
 
     # Calculate the duration of movement based on the distance
-    duration = DURATION
     # Perform easing on your own (pytweening's easeInCubic)
     total_steps = int(DURATION * 50)
     for t in range(total_steps):
-        ratio = linear(t / total_steps)
+        ratio = easeInOutExpo(t / total_steps)
         win32api.SetCursorPos(
             (
                 int(current_x + (x - current_x) * ratio),
@@ -79,8 +78,7 @@ def move_mouse(direction):
             or check_pixel_color(RIGHT_PIXEL_X, RIGHT_PIXEL_Y)
         ):
             break
-        time.sleep(0.001)
-
+        time.sleep(0.0001)
     with lock:
         mouse_moving = False
 
