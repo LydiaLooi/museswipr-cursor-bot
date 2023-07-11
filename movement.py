@@ -70,7 +70,7 @@ class Mouse:
         self.should_stop = False
         self.screen_width = win32api.GetSystemMetrics(0)
         self.screen_height = win32api.GetSystemMetrics(1)
-        self.duration = 5
+        self.duration = 1
         self.factor = 10000
         self.ease_func = easeInSine
 
@@ -100,7 +100,6 @@ class Mouse:
                 )
             )
             if self.should_stop:
-                print("STOPPPP")
                 break
 
     def move_right(self):
