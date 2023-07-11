@@ -3,16 +3,17 @@ import pyautogui
 import time
 import keyboard
 import random
-from pytweening import easeInOutExpo, linear, easeInQuint, easeInSine, easeInOutPoly
+from pytweening import easeInSine
+
 import threading
 import win32api
 from PIL import ImageGrab
 
-horizontal_ease_func = easeInOutPoly
+horizontal_ease_func = easeInSine
 vertical_ease_func = easeInSine
 
 horizontal_duration = 3.75
-vertical_duration = 3.75
+vertical_duration = 3.5
 
 factor = 5000
 
@@ -65,7 +66,7 @@ def check_pixel_color_range(start_x, start_y, end_x, end_y, num_pixels, threshol
     return False
 
 
-def move_mouse(direction, speed=None):
+def move_mouse(direction, h_speed=None, v_speed=None):
     global last_left_detection_time, last_right_detection_time
 
     current_x, current_y = win32api.GetCursorPos()  # Get current mouse position
@@ -101,11 +102,11 @@ def move_mouse(direction, speed=None):
     # Determine the move type
     if delta_x > delta_y:
         ease_func = horizontal_ease_func
-        duration = horizontal_duration if speed is None else speed
+        duration = horizontal_duration if h_speed is None else h_speed
         # print("Horizontal")
     else:
         ease_func = vertical_ease_func
-        duration = vertical_duration if speed is None else speed
+        duration = vertical_duration if v_speed is None else v_speed
         # print("Vertical")
     # Calculate the duration of movement based on the distance
     # Perform easing on your own (pytweening's easeInCubic)
@@ -138,11 +139,13 @@ def check_and_move():
 
         if start_pressed:
             current_time = time.perf_counter()
+
             if (
                 check_pixel_color(LEFT_PIXEL_X, LEFT_PIXEL_Y)
                 and current_time - last_left_detection_time >= DEBOUNCE_DELAY
             ):
-                speed = None
+                h_speed = None
+                v_speed = None
                 if check_pixel_color_range(
                     LEFT_PIXEL_X,
                     LEFT_PIXEL_Y - 200,
@@ -150,16 +153,20 @@ def check_and_move():
                     RIGHT_PIXEL_Y,
                     100,
                 ):
-                    speed = 1
+                    h_speed = 1.2
+                    v_speed = 1
 
-                threading.Thread(target=move_mouse("left", speed)).start()
+                threading.Thread(
+                    target=move_mouse("left", h_speed=h_speed, v_speed=v_speed)
+                ).start()
                 last_left_detection_time = current_time
 
             if (
                 check_pixel_color(RIGHT_PIXEL_X, RIGHT_PIXEL_Y)
                 and current_time - last_right_detection_time >= DEBOUNCE_DELAY
             ):
-                speed = None
+                h_speed = None
+                v_speed = None
                 if check_pixel_color_range(
                     LEFT_PIXEL_X,
                     LEFT_PIXEL_Y - 300,
@@ -167,9 +174,12 @@ def check_and_move():
                     RIGHT_PIXEL_Y,
                     150,
                 ):
-                    speed = 1
+                    h_speed = 1.2
+                    v_speed = 1
 
-                threading.Thread(target=move_mouse("right", speed)).start()
+                threading.Thread(
+                    target=move_mouse("right", h_speed=h_speed, v_speed=v_speed)
+                ).start()
                 last_right_detection_time = current_time
 
 
