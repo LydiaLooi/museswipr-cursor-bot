@@ -6,12 +6,13 @@ import random
 from pytweening import easeInOutExpo, linear, easeInQuint, easeInSine, easeInOutPoly
 import threading
 import win32api
+from PIL import ImageGrab
 
 horizontal_ease_func = easeInOutPoly
 vertical_ease_func = easeInSine
 
-horizontal_duration = 4
-vertical_duration = 4
+horizontal_duration = 3.75
+vertical_duration = 3.75
 
 factor = 5000
 
@@ -21,15 +22,13 @@ last_right_detection_time = 0
 
 # Constants for pixel coordinates and expected colors
 LEFT_PIXEL_X = 709
-LEFT_PIXEL_Y = 870  # 870
+LEFT_PIXEL_Y = 850  # 870 og
 
 RIGHT_PIXEL_X = 1216
-RIGHT_PIXEL_Y = 870  # 870
+RIGHT_PIXEL_Y = 850  # 870
 
 # Set the debounce delay (in seconds)
 DEBOUNCE_DELAY = 0.05
-
-OFFSET = 0.02
 
 
 def check_pixel_color(x, y, threshold=20):
@@ -44,7 +43,29 @@ def check_pixel_color(x, y, threshold=20):
     return False
 
 
-def move_mouse(direction):
+def check_pixel_color_range(start_x, start_y, end_x, end_y, num_pixels, threshold=20):
+    # Grab the region of interest
+    screenshot = ImageGrab.grab(bbox=(start_x, start_y, end_x + 1, end_y + 1))
+
+    # Convert the screenshot to grayscale format
+    screenshot = screenshot.convert("L")
+
+    # Save the screenshot to an image file
+    # screenshot.save("screenshot.png")
+
+    # Iterate over the first num_pixels in the 0th and -1th columns
+    for y in range(num_pixels):
+        # Check the pixel at (0, y)
+        if screenshot.getpixel((0, y)) > threshold:
+            return True
+        # Check the pixel at (-1, y), i.e., the last column
+        if screenshot.getpixel((-1, y)) > threshold:
+            return True
+
+    return False
+
+
+def move_mouse(direction, speed=None):
     global last_left_detection_time, last_right_detection_time
 
     current_x, current_y = win32api.GetCursorPos()  # Get current mouse position
@@ -57,15 +78,15 @@ def move_mouse(direction):
 
     if direction == "left":
         x = screen_width // 3 + random.randint(
-            -50, 50
+            -25, 25
         )  # Move to the third position on the x-axis
     else:
         x = screen_width * 2 // 3 + random.randint(
-            -50, 50
+            -25, 25
         )  # Move to the two third position on the x-axis
 
     y_move = random.randint(125, 200)
-    y_middle = screen_height // 2
+    y_middle = screen_height // 2 - 100
     if current_y > y_middle:
         y = current_y - y_move
     else:
@@ -80,11 +101,11 @@ def move_mouse(direction):
     # Determine the move type
     if delta_x > delta_y:
         ease_func = horizontal_ease_func
-        duration = horizontal_duration
+        duration = horizontal_duration if speed is None else speed
         # print("Horizontal")
     else:
         ease_func = vertical_ease_func
-        duration = vertical_duration
+        duration = vertical_duration if speed is None else speed
         # print("Vertical")
     # Calculate the duration of movement based on the distance
     # Perform easing on your own (pytweening's easeInCubic)
@@ -98,16 +119,6 @@ def move_mouse(direction):
                 int(current_y + (y - current_y) * ratio),
             )
         )
-        # current_time = time.perf_counter()
-        # a = check_pixel_color(LEFT_PIXEL_X, LEFT_PIXEL_Y)
-        # b = check_pixel_color(RIGHT_PIXEL_X, RIGHT_PIXEL_Y)
-        # c = current_time - last_left_detection_time >= DEBOUNCE_DELAY
-        # d = current_time - last_right_detection_time >= DEBOUNCE_DELAY
-        # if t > total_steps // 2 and ((a and c) or (b and d)):
-        #     print(a and c)
-        #     print(a and d)
-        # break
-        # time.sleep(0.0001)
 
 
 # Create a function to run the pixel color checking and mouse moving in a separate thread
@@ -131,17 +142,34 @@ def check_and_move():
                 check_pixel_color(LEFT_PIXEL_X, LEFT_PIXEL_Y)
                 and current_time - last_left_detection_time >= DEBOUNCE_DELAY
             ):
-                # print(f"{time.perf_counter()} detected left pixel")
-                threading.Thread(target=move_mouse("left")).start()
+                speed = None
+                if check_pixel_color_range(
+                    LEFT_PIXEL_X,
+                    LEFT_PIXEL_Y - 200,
+                    RIGHT_PIXEL_X,
+                    RIGHT_PIXEL_Y,
+                    100,
+                ):
+                    speed = 1
+
+                threading.Thread(target=move_mouse("left", speed)).start()
                 last_left_detection_time = current_time
 
             if (
                 check_pixel_color(RIGHT_PIXEL_X, RIGHT_PIXEL_Y)
                 and current_time - last_right_detection_time >= DEBOUNCE_DELAY
             ):
-                # print(f"{time.perf_counter()} detected right pixel")
+                speed = None
+                if check_pixel_color_range(
+                    LEFT_PIXEL_X,
+                    LEFT_PIXEL_Y - 300,
+                    RIGHT_PIXEL_X,
+                    RIGHT_PIXEL_Y,
+                    150,
+                ):
+                    speed = 1
 
-                threading.Thread(target=move_mouse("right")).start()
+                threading.Thread(target=move_mouse("right", speed)).start()
                 last_right_detection_time = current_time
 
 
