@@ -4,18 +4,18 @@ import time
 import keyboard
 import random
 from pytweening import easeInSine
-
-import threading
+from multiprocessing import Pool, Manager
 import win32api
 from PIL import ImageGrab
+
 
 horizontal_ease_func = easeInSine
 vertical_ease_func = easeInSine
 
-horizontal_duration = 3.75
-vertical_duration = 3.5
+horizontal_duration = 0.35
+vertical_duration = 0.35
 
-factor = 5000
+factor = 10000
 
 
 last_left_detection_time = 0
@@ -23,13 +23,13 @@ last_right_detection_time = 0
 
 # Constants for pixel coordinates and expected colors
 LEFT_PIXEL_X = 709
-LEFT_PIXEL_Y = 850  # 870 og
+LEFT_PIXEL_Y = 870  # 870 og $ 429 for lower screen
 
 RIGHT_PIXEL_X = 1216
-RIGHT_PIXEL_Y = 850  # 870
+RIGHT_PIXEL_Y = LEFT_PIXEL_Y
 
 # Set the debounce delay (in seconds)
-DEBOUNCE_DELAY = 0.02
+DEBOUNCE_DELAY = 0.05
 
 
 def check_pixel_color(x, y, threshold=20):
@@ -66,10 +66,13 @@ def check_pixel_color_range(start_x, start_y, end_x, end_y, num_pixels, threshol
     return False
 
 
-def move_mouse(direction, h_speed=None, v_speed=None):
+def move_mouse(_direction, h_speed=None, v_speed=None):
+    direction, h_speed, v_speed = _direction
+    # print(f"moving {direction}")
     global last_left_detection_time, last_right_detection_time
 
-    time.sleep(0.1)
+    # print(f"{time.perf_counter()} Moving {direction}")
+
     current_x, current_y = win32api.GetCursorPos()  # Get current mouse position
 
     # Move the mouse with non-linear movement from the current position to the middle of the left side of the screen with randomized y-coordinate
@@ -88,6 +91,7 @@ def move_mouse(direction, h_speed=None, v_speed=None):
         )  # Move to the two third position on the x-axis
 
     y_move = random.randint(175, 220)
+    # y_middle = 775  # screen_height // 2 - 100
     y_middle = screen_height // 2 - 100
     if current_y > y_middle:
         y = current_y - y_move
@@ -104,7 +108,6 @@ def move_mouse(direction, h_speed=None, v_speed=None):
     if delta_x > delta_y:
         ease_func = horizontal_ease_func
         duration = horizontal_duration if h_speed is None else h_speed
-        # print("Horizontal")
     else:
         ease_func = vertical_ease_func
         duration = vertical_duration if v_speed is None else v_speed
@@ -123,27 +126,32 @@ def move_mouse(direction, h_speed=None, v_speed=None):
         )
 
 
-# Create a function to run the pixel color checking and mouse moving in a separate thread
-def check_and_move():
-    global last_left_detection_time, last_right_detection_time
-    start_pressed = False
+def print_detection(_direction, h_speed=None, v_speed=None):
+    direction, h_speed, v_speed = _direction
+    if direction == "left":
+        print(f"{time.perf_counter()} | {direction} {h_speed} {v_speed}")
+    else:
+        print(
+            f"{time.perf_counter()} |                          {direction} {h_speed} {v_speed}"
+        )
 
+
+def check_and_move(queue):
+    last_detection_time = {"left": 0, "right": 0}
     while True:
         if keyboard.is_pressed("q"):
-            # Exit the script if the Q key is pressed
             print("Quitting.")
-            break
+            quit()
 
-        if keyboard.is_pressed("e"):
-            start_pressed = True
-            print("Activated!")
+        current_time = time.perf_counter()
 
-        if start_pressed:
-            current_time = time.perf_counter()
+        for direction in ["left", "right"]:
+            pixel_x = LEFT_PIXEL_X if direction == "left" else RIGHT_PIXEL_X
+            pixel_y = LEFT_PIXEL_Y if direction == "left" else RIGHT_PIXEL_Y
 
             if (
-                check_pixel_color(LEFT_PIXEL_X, LEFT_PIXEL_Y)
-                and current_time - last_left_detection_time >= DEBOUNCE_DELAY
+                check_pixel_color(pixel_x, pixel_y)
+                and current_time - last_detection_time[direction] >= DEBOUNCE_DELAY
             ):
                 h_speed = None
                 v_speed = None
@@ -152,41 +160,24 @@ def check_and_move():
                     LEFT_PIXEL_Y - 200,
                     RIGHT_PIXEL_X,
                     RIGHT_PIXEL_Y,
-                    100,
+                    20,
                 ):
-                    h_speed = 1.2
-                    v_speed = 1
-
-                threading.Thread(
-                    target=move_mouse("left", h_speed=h_speed, v_speed=v_speed)
-                ).start()
-                last_left_detection_time = current_time
-
-            if (
-                check_pixel_color(RIGHT_PIXEL_X, RIGHT_PIXEL_Y)
-                and current_time - last_right_detection_time >= DEBOUNCE_DELAY
-            ):
-                h_speed = None
-                v_speed = None
-                if check_pixel_color_range(
-                    LEFT_PIXEL_X,
-                    LEFT_PIXEL_Y - 300,
-                    RIGHT_PIXEL_X,
-                    RIGHT_PIXEL_Y,
-                    150,
-                ):
-                    h_speed = 1.2
-                    v_speed = 1
-
-                threading.Thread(
-                    target=move_mouse("right", h_speed=h_speed, v_speed=v_speed)
-                ).start()
-                last_right_detection_time = current_time
+                    h_speed = 0.2
+                    v_speed = 0.2
+                # print(f"putting {direction}")
+                queue.put((direction, h_speed, v_speed))
+                last_detection_time[direction] = current_time
 
 
 if __name__ == "__main__":
     print("Running...")
     print(f"Horizontal total steps is: {int(horizontal_duration * factor)}")
     print(f"Vertical total steps is: {int(vertical_duration * factor)}")
-    # Start the check_and_move function in a separate thread
-    threading.Thread(target=check_and_move).start()
+
+    with Manager() as manager:
+        task_queue = manager.Queue()
+        with Pool(processes=4) as pool:  # Create a pool of 4 worker processes
+            pool.apply_async(check_and_move, (task_queue,))
+            while True:
+                task = task_queue.get()
+                pool.apply_async(move_mouse, (task,))
