@@ -42,26 +42,24 @@ class Command:
 
 
 class MoveLeftCommand(Command):
-    def __init__(self, mouse, speed=0):
+    def __init__(self, mouse):
         self.mouse = mouse
-        self.speed = speed
 
     def execute(self):
         self.mouse.start()
-        self.mouse.move_left(extra_speed=self.speed)
+        self.mouse.move_left()
 
     def stop(self):
         self.mouse.stop()
 
 
 class MoveRightCommand(Command):
-    def __init__(self, mouse, speed=0):
+    def __init__(self, mouse):
         self.mouse = mouse
-        self.speed = speed
 
     def execute(self):
         self.mouse.start()
-        self.mouse.move_right(extra_speed=self.speed)
+        self.mouse.move_right()
 
     def stop(self):
         self.mouse.stop()
@@ -72,11 +70,11 @@ class Mouse:
         self.should_stop = False
         self.screen_width = win32api.GetSystemMetrics(0)
         self.screen_height = win32api.GetSystemMetrics(1)
-        self.duration = 10
+        self.duration = 5
         self.factor = 10000
         self.ease_func = easeInSine
 
-    def move_left(self, extra_speed=0):
+    def move_left(self):
         current_x, current_y = win32api.GetCursorPos()  # Get current mouse position
 
         # implement the action of moving the mouse to the left
@@ -91,7 +89,7 @@ class Mouse:
         else:
             y = current_y + y_move
 
-        total_steps = max(1, int((self.duration - extra_speed) * self.factor))
+        total_steps = int(self.duration * self.factor)
         for t in range(total_steps):
             ratio = self.ease_func(t / total_steps)
 
@@ -102,10 +100,11 @@ class Mouse:
                 )
             )
             if self.should_stop:
-                print("STOP MOVING TO THE LEFT")
+                print("Stop moving left")
+
                 break
 
-    def move_right(self, extra_speed=0):
+    def move_right(self):
         current_x, current_y = win32api.GetCursorPos()  # Get current mouse position
 
         # implement the action of moving the mouse to the right
@@ -120,7 +119,7 @@ class Mouse:
         else:
             y = current_y + y_move
 
-        total_steps = max(1, int((self.duration - extra_speed) * self.factor))
+        total_steps = int(self.duration * self.factor)
         for t in range(total_steps):
             ratio = self.ease_func(t / total_steps)
 
@@ -131,8 +130,7 @@ class Mouse:
                 )
             )
             if self.should_stop:
-                print("STOP MOVING TO THE RIGHT")
-
+                print("Stop moving right")
                 break
 
     def stop(self):
@@ -164,40 +162,6 @@ class Invoker:
             self.command.execute()
 
 
-def check_pixel_color(x, y, threshold=20):
-    # Get the pixel color at the given coordinates
-    actual_color = pyautogui.pixel(x, y)
-
-    # Check if any RGB value exceeds the threshold
-    for value in actual_color:
-        if value > threshold:
-            return True
-
-    return False
-
-
-def check_pixel_color_range(start_x, start_y, end_x, end_y, num_pixels, threshold=20):
-    # Grab the region of interest
-    screenshot = ImageGrab.grab(bbox=(start_x, start_y, end_x + 1, end_y + 1))
-
-    # Convert the screenshot to grayscale format
-    screenshot = screenshot.convert("L")
-
-    # Save the screenshot to an image file
-    # screenshot.save("screenshot.png")
-
-    # Iterate over the first num_pixels in the 0th and -1th columns
-    for y in range(num_pixels):
-        # Check the pixel at (0, y)
-        if screenshot.getpixel((0, y)) > threshold:
-            return True
-        # Check the pixel at (-1, y), i.e., the last column
-        if screenshot.getpixel((-1, y)) > threshold:
-            return True
-
-    return False
-
-
 def print_detection(task):
     direction, h_speed, v_speed = task
     if direction == "left":
@@ -209,33 +173,31 @@ def print_detection(task):
 
 
 def check_and_move(queue):
-    last_detection_time = {"left": 0, "right": 0}
+    global a_pressed, s_pressed, k_pressed, l_pressed
+
     while True:
         if keyboard.is_pressed("q"):
             print("Quitting.")
             quit()
 
-        current_time = time.perf_counter()
+        if keyboard.is_pressed("a") and not a_pressed:
+            queue.put(("left",))
 
-        for direction in ["left", "right"]:
-            pixel_x = LEFT_PIXEL_X if direction == "left" else RIGHT_PIXEL_X
-            pixel_y = LEFT_PIXEL_Y if direction == "left" else RIGHT_PIXEL_Y
+            a_pressed = True
+        elif not keyboard.is_pressed("a"):
+            a_pressed = False
 
-            if (
-                check_pixel_color(pixel_x, pixel_y)
-                and current_time - last_detection_time[direction] >= DEBOUNCE_DELAY
-            ):
-                extra_speed = 0
-                if check_pixel_color_range(
-                    LEFT_PIXEL_X,
-                    LEFT_PIXEL_Y - 200,
-                    RIGHT_PIXEL_X,
-                    RIGHT_PIXEL_Y,
-                    20,
-                ):
-                    extra_speed = 0  # Temporarily 0
-                queue.put((direction, extra_speed))
-                last_detection_time[direction] = current_time
+        if keyboard.is_pressed("s") and not s_pressed:
+            queue.put(("right",))
+            s_pressed = True
+        elif not keyboard.is_pressed("s"):
+            s_pressed = False
+
+        if keyboard.is_pressed("d"):
+            # Quickly queue a bunch
+            queue.put(("left",))
+            time.sleep(0.05)
+            queue.put(("right",))
 
 
 if __name__ == "__main__":
@@ -250,18 +212,15 @@ if __name__ == "__main__":
         with Pool(processes=4) as pool:  # Create a pool of 4 worker processes
             pool.apply_async(check_and_move, (task_queue,))
             while True:
-                (
-                    direction,
-                    speed,
-                ) = task_queue.get()
-
+                task = task_queue.get()
+                direction = task[0]
                 if direction == "left":
                     invoker.set_command(
-                        MoveLeftCommand(mouse, speed)
+                        MoveLeftCommand(mouse)
                     )  # Set the new command to move left
                 elif direction == "right":
                     invoker.set_command(
-                        MoveRightCommand(mouse, speed)
+                        MoveRightCommand(mouse)
                     )  # Set the new command to move right
                 else:
-                    print(f"Something went wrong: {direction}")
+                    print(f"Something went wrong: {task}")
