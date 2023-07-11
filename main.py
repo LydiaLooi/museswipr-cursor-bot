@@ -74,7 +74,7 @@ def move_mouse(direction):
 
 # Create a function to run the pixel color checking and mouse moving in a separate thread
 def check_and_move():
-    space_pressed = False  # Track the state of the space bar
+    start_pressed = False
 
     while True:
         if keyboard.is_pressed("q"):
@@ -82,12 +82,11 @@ def check_and_move():
             print("Quitting.")
             break
 
-        if keyboard.is_pressed("space"):
-            # Toggle the state of the space bar
-            space_pressed = True
-            print("Space bar activated!")
+        if keyboard.is_pressed("e"):
+            start_pressed = True
+            print("Activated!")
 
-        if space_pressed:
+        if start_pressed:
             if check_pixel_color(LEFT_PIXEL_X, LEFT_PIXEL_Y):
                 threading.Thread(target=move_mouse("left")).start()
 
