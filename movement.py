@@ -32,38 +32,10 @@ RIGHT_PIXEL_Y = LEFT_PIXEL_Y
 DEBOUNCE_DELAY = 0.05
 
 
-def check_pixel_color(x, y, threshold=20):
-    # Get the pixel color at the given coordinates
-    actual_color = pyautogui.pixel(x, y)
-
-    # Check if any RGB value exceeds the threshold
-    for value in actual_color:
-        if value > threshold:
-            return True
-
-    return False
-
-
-def check_pixel_color_range(start_x, start_y, end_x, end_y, num_pixels, threshold=20):
-    # Grab the region of interest
-    screenshot = ImageGrab.grab(bbox=(start_x, start_y, end_x + 1, end_y + 1))
-
-    # Convert the screenshot to grayscale format
-    screenshot = screenshot.convert("L")
-
-    # Save the screenshot to an image file
-    # screenshot.save("screenshot.png")
-
-    # Iterate over the first num_pixels in the 0th and -1th columns
-    for y in range(num_pixels):
-        # Check the pixel at (0, y)
-        if screenshot.getpixel((0, y)) > threshold:
-            return True
-        # Check the pixel at (-1, y), i.e., the last column
-        if screenshot.getpixel((-1, y)) > threshold:
-            return True
-
-    return False
+a_pressed = False
+s_pressed = False
+k_pressed = False
+l_pressed = False
 
 
 def move_mouse(task):
@@ -126,8 +98,8 @@ def move_mouse(task):
         )
 
 
-def print_detection(_direction, h_speed=None, v_speed=None):
-    direction, h_speed, v_speed = _direction
+def print_detection(task):
+    direction, h_speed, v_speed = task
     if direction == "left":
         print(f"{time.perf_counter()} | {direction} {h_speed} {v_speed}")
     else:
@@ -137,36 +109,24 @@ def print_detection(_direction, h_speed=None, v_speed=None):
 
 
 def check_and_move(queue):
-    last_detection_time = {"left": 0, "right": 0}
+    global a_pressed, s_pressed, k_pressed, l_pressed
+
     while True:
         if keyboard.is_pressed("q"):
             print("Quitting.")
             quit()
 
-        current_time = time.perf_counter()
+        if keyboard.is_pressed("a") and not a_pressed:
+            queue.put(("left", None, None))
+            a_pressed = True
+        elif not keyboard.is_pressed("a"):
+            a_pressed = False
 
-        for direction in ["left", "right"]:
-            pixel_x = LEFT_PIXEL_X if direction == "left" else RIGHT_PIXEL_X
-            pixel_y = LEFT_PIXEL_Y if direction == "left" else RIGHT_PIXEL_Y
-
-            if (
-                check_pixel_color(pixel_x, pixel_y)
-                and current_time - last_detection_time[direction] >= DEBOUNCE_DELAY
-            ):
-                h_speed = None
-                v_speed = None
-                if check_pixel_color_range(
-                    LEFT_PIXEL_X,
-                    LEFT_PIXEL_Y - 200,
-                    RIGHT_PIXEL_X,
-                    RIGHT_PIXEL_Y,
-                    20,
-                ):
-                    h_speed = 0.2
-                    v_speed = 0.2
-                # print(f"putting {direction}")
-                queue.put((direction, h_speed, v_speed))
-                last_detection_time[direction] = current_time
+        if keyboard.is_pressed("s") and not s_pressed:
+            queue.put(("right", None, None))
+            s_pressed = True
+        elif not keyboard.is_pressed("s"):
+            s_pressed = False
 
 
 if __name__ == "__main__":
@@ -180,4 +140,4 @@ if __name__ == "__main__":
             pool.apply_async(check_and_move, (task_queue,))
             while True:
                 task = task_queue.get()
-                pool.apply_async(move_mouse, (task,))
+                pool.apply_async(print_detection, (task,))
