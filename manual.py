@@ -70,7 +70,7 @@ class Mouse:
         self.should_stop = False
         self.screen_width = win32api.GetSystemMetrics(0)
         self.screen_height = win32api.GetSystemMetrics(1)
-        self.duration = 5
+        self.duration = 20
         self.factor = 10000
         self.ease_func = easeInSine
 
@@ -154,6 +154,7 @@ class Invoker:
         self.command = command
 
         # Start a new thread to execute the command
+        print("Starting a new thread to execute command")
         self.current_thread = threading.Thread(target=self.execute_command)
         self.current_thread.start()
 
@@ -213,6 +214,7 @@ if __name__ == "__main__":
             pool.apply_async(check_and_move, (task_queue,))
             while True:
                 task = task_queue.get()
+                print("Task received")
                 direction = task[0]
                 if direction == "left":
                     invoker.set_command(
