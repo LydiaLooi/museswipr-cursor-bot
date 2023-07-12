@@ -72,7 +72,7 @@ def check_pixel_color_range(start_x, start_y, end_x, end_y, num_pixels, threshol
     # screenshot.save("screenshot.png")
 
     # Iterate over the first num_pixels in the 0th and -1th columns
-    for y in range(num_pixels):
+    for y in range(0, num_pixels, 5):
         # Check the pixel at (0, y)
         if screenshot.getpixel((0, y)) > threshold:
             return True
@@ -93,9 +93,9 @@ class Mouse:
         self.should_stop = False
         self.screen_width = win32api.GetSystemMetrics(0)
         self.screen_height = win32api.GetSystemMetrics(1)
-        self.duration = 50
+        self.duration = 60
         self.factor = 10000
-        self.move_iteration = 100
+        self.move_iteration = 500
         self.ease_func = easeInSine
         print("Mouse initialised.")
         print(f"Total steps: {int(self.duration * self.factor)}")
@@ -141,11 +141,11 @@ class Mouse:
         current_x, current_y = win32api.GetCursorPos()  # Get current mouse position
 
         # implement the action of moving the mouse to the left
-        x = self.screen_width // 3 + random.randint(-25, 50)
+        x = self.screen_width // 3 + random.randint(-25, 100)
 
-        y_move = random.randint(175, 250)
+        y_move = random.randint(225, 300)
 
-        y_middle = self.screen_height // 2 - 130
+        y_middle = self.screen_height // 2 - 150
         if current_y > y_middle:
             y = current_y - y_move
         else:
@@ -175,11 +175,11 @@ class Mouse:
 
         # implement the action of moving the mouse to the right
         # check self.should_stop after each step and stop if it's True
-        x = self.screen_width * 2 // 3 + random.randint(-25, 25)
+        x = self.screen_width * 2 // 3 + random.randint(-25, 100)
 
-        y_move = random.randint(175, 220)
+        y_move = random.randint(225, 300)
         # y_middle = 775  # screen_height // 2 - 100
-        y_middle = self.screen_height // 2 - 100
+        y_middle = self.screen_height // 2 - 150
         if current_y > y_middle:
             y = current_y - y_move
         else:
@@ -291,10 +291,10 @@ def check_and_move(queue):
                     LEFT_PIXEL_Y - 200,
                     RIGHT_PIXEL_X,
                     RIGHT_PIXEL_Y,
-                    20,
+                    170,
                 ):
-                    h_speed = 30
-                    v_speed = 30
+                    h_speed = 85
+                    v_speed = 80
                 # print(f"putting {direction}")
                 queue.put((direction, h_speed, v_speed))
                 # print_detection((direction, a, ""))
