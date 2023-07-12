@@ -108,15 +108,15 @@ class Mouse:
         self.should_stop = False
         self.screen_width = win32api.GetSystemMetrics(0)
         self.screen_height = win32api.GetSystemMetrics(1)
-        self.h_duration = 120
-        self.v_duration = 80
+        self.h_duration = 130
+        self.v_duration = 110
         self.factor = 10000
         self.h_move_iteration = 900
         self.v_move_iteration = 5000
         self.ease_func = easeInSine
 
         self.y_middle = (
-            self.screen_height // 2 - 130
+            self.screen_height // 2 - 200
         )  # Where the mouse will me roughly on the Y-axis
 
         print("Mouse initialised.")
@@ -179,9 +179,7 @@ class Mouse:
         x = self.screen_width * 2 // 3 + random.randint(-25, 50)
 
         y_move = random.randint(175, 220)
-        # y_middle = 775  # screen_height // 2 - 100
-        y_middle = self.screen_height // 2 - 100
-        if current_y > y_middle:
+        if current_y > self.y_middle:
             y = current_y - y_move
         else:
             y = current_y + y_move
@@ -199,7 +197,7 @@ class Mouse:
             # print("-------->>")
             duration = self.h_duration if h_speed is None else h_speed
             iteration = self.h_move_iteration
-
+        # print(f"Duration R {duration}")
         total_steps = int(duration * self.factor)
         for t in range(total_steps):
             if self.should_stop:
@@ -321,17 +319,8 @@ def check_and_move(queue):
             pixel_y = LEFT_PIXEL_Y if direction == "left" else RIGHT_PIXEL_Y
             a = current_time - memory[direction]
             if check_pixel_color(pixel_x, pixel_y) and a >= DEBOUNCE_DELAY:
-                h_speed = 50
+                h_speed = None
                 v_speed = None
-                # if check_pixel_color_range(
-                #     LEFT_PIXEL_X,
-                #     LEFT_PIXEL_Y - 200,
-                #     RIGHT_PIXEL_X,
-                #     RIGHT_PIXEL_Y,
-                #     130,
-                # ):
-                #     h_speed = 45  # 45 can do horizontal EWF but not vertical
-                #     v_speed = 25
                 speed = check_pixel_color_range(
                     LEFT_PIXEL_X,
                     LEFT_PIXEL_Y - 350,
@@ -339,14 +328,14 @@ def check_and_move(queue):
                     RIGHT_PIXEL_Y,
                     250,
                 )
-
+                # print(memory["speed"])
                 if memory["speed"] == "FAST":
                     h_speed = 45
                     v_speed = 25
 
                 elif memory["speed"] == "MID":
-                    h_speed = 70
-                    v_speed = 50
+                    h_speed = 100
+                    v_speed = 70
 
                 queue.put(
                     (
