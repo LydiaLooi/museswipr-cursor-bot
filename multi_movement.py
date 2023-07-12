@@ -108,8 +108,10 @@ class Mouse:
         self.should_stop = False
         self.screen_width = win32api.GetSystemMetrics(0)
         self.screen_height = win32api.GetSystemMetrics(1)
-        self.h_duration = 130
-        self.v_duration = 110
+
+        self.h_duration = {"SLOW": 110, "MID": 80, "FAST": 40}
+        self.v_duration = {"SLOW": 90, "MID": 60, "FAST": 20}
+
         self.factor = 10000
         self.h_move_iteration = 900
         self.v_move_iteration = 5000
@@ -119,24 +121,23 @@ class Mouse:
             self.screen_height // 2 - 200
         )  # Where the mouse will me roughly on the Y-axis
 
+        self.up_zone_y = self.y_middle - 200
+        self.low_zone_y = self.y_middle + 200
+        self.dead_zone_x_offset = 100
+        # Deadzone x (left) = self.screen_width // 3 - 100
+        # Deadzone x (right) = self.screen_width * 2 // 3 + 100
+
         print("Mouse initialised.")
-        print(f"H Total steps: {int(self.h_duration * self.factor)}")
-        print(f"V Total steps: {int(self.v_duration * self.factor)}")
+        print(f"H Total steps: {int(self.h_duration['SLOW'] * self.factor)}")
+        print(f"V Total steps: {int(self.v_duration['SLOW'] * self.factor)}")
         print(f"H Move iteration: {self.h_move_iteration}")
         print(f"V Move iteration: {self.v_move_iteration}")
 
-    def move_left(self, h_speed=None, v_speed=None, last_direction=None):
+    def move_left(self, speed="SLOW", last_direction=None):
         current_x, current_y = win32api.GetCursorPos()  # Get current mouse position
 
         # implement the action of moving the mouse to the left
         x = self.screen_width // 3 + random.randint(-25, 50)
-
-        y_move = random.randint(175, 250)
-
-        if current_y > self.y_middle:
-            y = current_y - y_move
-        else:
-            y = current_y + y_move
 
         middle_x = self.screen_width // 2
 
@@ -144,13 +145,22 @@ class Mouse:
         if current_x < middle_x:
             # VERTICAL
             # print("/\\")
-            duration = self.v_duration if v_speed is None else v_speed
+            duration = self.v_duration[speed] if speed else self.v_duration["SLOW"]
             iteration = self.v_move_iteration
+            y_move = 200
+
+            if current_y > self.y_middle:
+                y = current_y - y_move
+            else:
+                y = current_y + y_move
+
         else:
             # HORIZONTAL
             # print("<<--------")
-            duration = self.h_duration if h_speed is None else h_speed
+            duration = self.h_duration[speed] if speed else self.h_duration["SLOW"]
             iteration = self.h_move_iteration
+
+            y = current_y  # TODO: For now it just always swieps horizontally.
 
         total_steps = int(duration * self.factor)
         for t in range(total_steps):
@@ -171,18 +181,12 @@ class Mouse:
                     )
                 )
 
-    def move_right(self, h_speed=None, v_speed=None, last_direction=None):
+    def move_right(self, speed="SLOW", last_direction=None):
         current_x, current_y = win32api.GetCursorPos()  # Get current mouse position
 
         # implement the action of moving the mouse to the right
         # check self.should_stop after each step and stop if it's True
         x = self.screen_width * 2 // 3 + random.randint(-25, 50)
-
-        y_move = random.randint(175, 220)
-        if current_y > self.y_middle:
-            y = current_y - y_move
-        else:
-            y = current_y + y_move
 
         middle_x = self.screen_width // 2
 
@@ -190,13 +194,22 @@ class Mouse:
         if current_x > middle_x:
             # VERTICAL
             # print("              /\\")
-            duration = self.v_duration if v_speed is None else v_speed
+            duration = self.v_duration[speed] if speed else self.v_duration["SLOW"]
             iteration = self.v_move_iteration
+            y_move = 200
+            if current_y > self.y_middle:
+                y = current_y - y_move
+            else:
+                y = current_y + y_move
+
         else:
             # HORIZONTAL
             # print("-------->>")
-            duration = self.h_duration if h_speed is None else h_speed
+            duration = self.h_duration[speed] if speed else self.h_duration["SLOW"]
             iteration = self.h_move_iteration
+
+            y = current_y
+
         # print(f"Duration R {duration}")
         total_steps = int(duration * self.factor)
         for t in range(total_steps):
@@ -225,18 +238,16 @@ class Mouse:
 
 
 class MoveLeftCommand(Command):
-    def __init__(self, mouse: Mouse, h_speed=None, v_speed=None, last_direction=None):
+    def __init__(self, mouse: Mouse, speed="SLOW", last_direction=None):
         self.mouse = mouse
-        self.h_speed = h_speed
-        self.v_speed = v_speed
+        self.speed = speed
         self.last_direction = last_direction
 
     def execute(self):
         self.mouse.start()
         # print_detection(("left", "", threading.get_ident()))
         self.mouse.move_left(
-            h_speed=self.h_speed,
-            v_speed=self.v_speed,
+            speed=self.speed,
             last_direction=self.last_direction,
         )
         # self.mouse.dummy_move()
@@ -246,18 +257,16 @@ class MoveLeftCommand(Command):
 
 
 class MoveRightCommand(Command):
-    def __init__(self, mouse: Mouse, h_speed=None, v_speed=None, last_direction=None):
+    def __init__(self, mouse: Mouse, speed="SLOW", last_direction=None):
         self.mouse = mouse
-        self.h_speed = h_speed
-        self.v_speed = v_speed
+        self.speed = speed
         self.last_direction = last_direction
 
     def execute(self):
         self.mouse.start()
         # print_detection(("right", "", threading.get_ident()))
         self.mouse.move_right(
-            h_speed=self.h_speed,
-            v_speed=self.v_speed,
+            speed=self.speed,
             last_direction=self.last_direction,
         )
         # self.mouse.dummy_move()
@@ -319,8 +328,6 @@ def check_and_move(queue):
             pixel_y = LEFT_PIXEL_Y if direction == "left" else RIGHT_PIXEL_Y
             a = current_time - memory[direction]
             if check_pixel_color(pixel_x, pixel_y) and a >= DEBOUNCE_DELAY:
-                h_speed = None
-                v_speed = None
                 speed = check_pixel_color_range(
                     LEFT_PIXEL_X,
                     LEFT_PIXEL_Y - 350,
@@ -328,27 +335,15 @@ def check_and_move(queue):
                     RIGHT_PIXEL_Y,
                     250,
                 )
-                # print(memory["speed"])
-                if memory["speed"] == "FAST":
-                    h_speed = 45
-                    v_speed = 25
-
-                elif memory["speed"] == "MID":
-                    h_speed = 100
-                    v_speed = 70
-
                 queue.put(
                     (
                         direction,
-                        memory["h_speed"],
-                        memory["v_speed"],
+                        memory["speed"],
                         memory["last_direction"],
                     )
                 )
                 # print_detection((direction, a, ""))
                 memory[direction] = current_time
-                memory["h_speed"] = h_speed
-                memory["v_speed"] = v_speed
                 memory["speed"] = speed
                 memory["last_direction"] = direction
 
@@ -368,13 +363,12 @@ if __name__ == "__main__":
                 task = task_queue.get()
                 #     # print("Task received")
 
-                direction, h_speed, v_speed, last_direction = task
+                direction, speed, last_direction = task
                 if direction == "left":
                     invoker.set_command(
                         MoveLeftCommand(
                             mouse,
-                            h_speed=h_speed,
-                            v_speed=v_speed,
+                            speed=speed,
                             last_direction=last_direction,
                         )
                     )  # Set the new command to move left
@@ -382,8 +376,7 @@ if __name__ == "__main__":
                     invoker.set_command(
                         MoveRightCommand(
                             mouse,
-                            h_speed=h_speed,
-                            v_speed=v_speed,
+                            speed=speed,
                             last_direction=last_direction,
                         )
                     )  # Set the new command to move right
