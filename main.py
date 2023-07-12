@@ -61,9 +61,7 @@ def check_pixel_color(x, y, threshold=20):
     return False
 
 
-def check_pixel_color_range(
-    start_x, start_y, end_x, end_y, mid_swipe_threshold, threshold=20
-):
+def check_pixel_color_range(start_x, start_y, end_x, end_y, num_pixels, threshold=20):
     # Grab the region of interest
     screenshot = ImageGrab.grab(bbox=(start_x, start_y, end_x + 1, end_y + 1))
 
@@ -73,29 +71,16 @@ def check_pixel_color_range(
     # Save the screenshot to an image file
     # screenshot.save("screenshot.png")
 
-    height = screenshot.height
-
-    # Iterate over the range defined by mid_swipe_threshold to the top
-    for y in range(
-        height - 70, height - mid_swipe_threshold, -1
-    ):  # 60 is so it doesn't detect the note that triggered it
+    # Iterate over the first num_pixels in the 0th and -1th columns
+    for y in range(num_pixels):
         # Check the pixel at (0, y)
         if screenshot.getpixel((0, y)) > threshold:
-            return "FAST"
+            return True
         # Check the pixel at (-1, y), i.e., the last column
         if screenshot.getpixel((-1, y)) > threshold:
-            return "FAST"
+            return True
 
-    # Iterate over the range defined by start_y to mid_swipe_threshold
-    for y in range(0, height - mid_swipe_threshold):
-        # Check the pixel at (0, y)
-        if screenshot.getpixel((0, y)) > threshold:
-            return "MID"
-        # Check the pixel at (-1, y), i.e., the last column
-        if screenshot.getpixel((-1, y)) > threshold:
-            return "MID"
-
-    return "SLOW"
+    return False
 
 
 class Command:
@@ -109,49 +94,47 @@ class Mouse:
         self.screen_width = win32api.GetSystemMetrics(0)
         self.screen_height = win32api.GetSystemMetrics(1)
 
-        self.h_duration = {"SLOW": 130, "MID": 100, "FAST": 45}
-        self.v_duration = {"SLOW": 100, "MID": 70, "FAST": 25}
+        self.y_middle = self.screen_height // 2 - 130
+
+        self.duration = 50
+        self.faster_duration = 15
 
         self.factor = 10000
-        self.h_move_iteration = 900
-        self.v_move_iteration = 5000
+
+        self.h_move_iteration = 100
+        self.v_move_iteration = 100
+
         self.ease_func = easeInSine
-
-        self.y_middle = (
-            self.screen_height // 2 - 200
-        )  # Where the mouse will me roughly on the Y-axis
-
         print("Mouse initialised.")
-        print(f"H Total steps SLOW: {int(self.h_duration['SLOW'] * self.factor)}")
-        print(f"V Total steps SLOW: {int(self.v_duration['SLOW'] * self.factor)}")
-        print(f"H Move iteration: {self.h_move_iteration}")
-        print(f"V Move iteration: {self.v_move_iteration}")
 
-    def move_left(self, speed=None, last_direction=None):
+        print(f"Normal Duration Total steps: {int(self.duration * self.factor)}")
+        print(f"Faster Duration Total steps: {int(self.faster_duration * self.factor)}")
+
+        print(f"H Move iteration: {self.h_move_iteration}")
+        print(f"V Move iteration: {self.h_move_iteration}")
+
+    def move_left(self, faster=False):
         current_x, current_y = win32api.GetCursorPos()  # Get current mouse position
 
         # implement the action of moving the mouse to the left
         x = self.screen_width // 3 + random.randint(-25, 50)
 
-        y_move = random.randint(175, 250)
+        y_move = random.randint(70, 120)
 
         if current_y > self.y_middle:
-            y = current_y - y_move
+            y = self.y_middle - y_move
         else:
-            y = current_y + y_move
+            y = self.y_middle + y_move
 
-        middle_x = self.screen_width // 2
+        if faster:
+            duration = self.faster_duration
+        else:
+            duration = self.duration
 
-        # Detect move type - Horizontal vs Vertical. If on left side already, must be moving vertically then.
-        if current_x < middle_x:
-            # VERTICAL
-            # print("/\\")
-            duration = self.v_duration[speed] if speed else self.v_duration["SLOW"]
+        # Movement type
+        if current_x < self.screen_width // 2:
             iteration = self.v_move_iteration
         else:
-            # HORIZONTAL
-            # print("<<--------")
-            duration = self.h_duration[speed] if speed else self.h_duration["SLOW"]
             iteration = self.h_move_iteration
 
         total_steps = int(duration * self.factor)
@@ -173,41 +156,39 @@ class Mouse:
                     )
                 )
 
-    def move_right(self, speed=None, last_direction=None):
+    def move_right(self, faster=False):
         current_x, current_y = win32api.GetCursorPos()  # Get current mouse position
 
         # implement the action of moving the mouse to the right
         # check self.should_stop after each step and stop if it's True
-        x = self.screen_width * 2 // 3 + random.randint(-25, 50)
+        x = self.screen_width * 2 // 3 + random.randint(-25, 25)
 
-        y_move = random.randint(175, 220)
+        y_move = random.randint(100, 150)
+
         if current_y > self.y_middle:
-            y = current_y - y_move
+            y = self.y_middle - y_move
         else:
-            y = current_y + y_move
+            y = self.y_middle + y_move
 
-        middle_x = self.screen_width // 2
+        if faster:
+            duration = self.faster_duration
+        else:
+            duration = self.duration
 
-        # Detect move type - Horizontal vs Vertical. If on right side already, must be moving vertically then.
-        if current_x > middle_x:
-            # VERTICAL
-            # print("              /\\")
-            duration = self.v_duration[speed] if speed else self.v_duration["MID"]
+        # Movement type
+        if current_x < self.screen_width // 2:
             iteration = self.v_move_iteration
         else:
-            # HORIZONTAL
-            # print("-------->>")
-            duration = self.h_duration[speed] if speed else self.h_duration["MID"]
             iteration = self.h_move_iteration
-        # print(f"Duration R {duration}")
+
         total_steps = int(duration * self.factor)
+
         for t in range(total_steps):
             if self.should_stop:
-                # print("              Stop moving left")
+                # print("              Stop moving right")
                 if t < total_steps // 2:
-                    print("Stopped left too early")
+                    print("Stopped right too early")
                 break
-
             # Attempt to reduce the performance impact of setting the cursor position every iteration
             if t % iteration == 0:
                 ratio = self.ease_func(t / total_steps)
@@ -227,34 +208,26 @@ class Mouse:
 
 
 class MoveLeftCommand(Command):
-    def __init__(self, mouse: Mouse, speed="SLOW", last_direction=None):
+    def __init__(self, mouse: Mouse, faster=False):
         self.mouse = mouse
-        self.speed = speed
-        self.last_direction = last_direction
+        self.faster = faster
 
     def execute(self):
         self.mouse.start()
-        self.mouse.move_left(
-            speed=self.speed,
-            last_direction=self.last_direction,
-        )
+        self.mouse.move_left(self.faster)
 
     def stop(self):
         self.mouse.stop()
 
 
 class MoveRightCommand(Command):
-    def __init__(self, mouse: Mouse, speed="SLOW", last_direction=None):
+    def __init__(self, mouse: Mouse, faster=False):
         self.mouse = mouse
-        self.speed = speed
-        self.last_direction = last_direction
+        self.faster = faster
 
     def execute(self):
         self.mouse.start()
-        self.mouse.move_right(
-            speed=self.speed,
-            last_direction=self.last_direction,
-        )
+        self.mouse.move_right(self.faster)
 
     def stop(self):
         self.mouse.stop()
@@ -293,12 +266,7 @@ def print_detection(task):
 
 
 def check_and_move(queue):
-    memory = {
-        "left": 0,
-        "right": 0,
-        "speed": "MID",
-        "last_direction": None,
-    }
+    last_detection_time = {"left": 0, "right": 0}
     while True:
         if keyboard.is_pressed("q"):
             print("Quitting.")
@@ -309,34 +277,19 @@ def check_and_move(queue):
         for direction in ["left", "right"]:
             pixel_x = LEFT_PIXEL_X if direction == "left" else RIGHT_PIXEL_X
             pixel_y = LEFT_PIXEL_Y if direction == "left" else RIGHT_PIXEL_Y
-            a = current_time - memory[direction]
+            a = current_time - last_detection_time[direction]
             if check_pixel_color(pixel_x, pixel_y) and a >= DEBOUNCE_DELAY:
-                speed = check_pixel_color_range(
+                faster = False
+                if check_pixel_color_range(
                     LEFT_PIXEL_X,
-                    LEFT_PIXEL_Y - 350,
+                    LEFT_PIXEL_Y - 200,
                     RIGHT_PIXEL_X,
                     RIGHT_PIXEL_Y,
-                    250,
-                )
-                # if memory["speed"] == "FAST":
-                #     h_speed = 45
-                #     v_speed = 25
-
-                # elif memory["speed"] == "MID":
-                #     h_speed = 100
-                #     v_speed = 70
-
-                queue.put(
-                    (
-                        direction,
-                        memory["speed"],
-                        memory["last_direction"],
-                    )
-                )
-                # print_detection((direction, a, ""))
-                memory[direction] = current_time
-                memory["speed"] = speed
-                memory["last_direction"] = direction
+                    140,
+                ):
+                    faster = True
+                queue.put((direction, faster))
+                last_detection_time[direction] = current_time
 
 
 if __name__ == "__main__":
@@ -348,28 +301,15 @@ if __name__ == "__main__":
 
     with Manager() as manager:
         task_queue = manager.Queue()
-        with Pool(processes=4) as pool:  # Create a pool of 4 worker processes
+        with Pool(processes=6) as pool:  # Create a pool of 4 worker processes
             pool.apply_async(check_and_move, (task_queue,))
             while True:
                 task = task_queue.get()
-                #     # print("Task received")
 
-                direction, speed, last_direction = task
+                direction, faster = task
                 if direction == "left":
-                    invoker.set_command(
-                        MoveLeftCommand(
-                            mouse,
-                            speed=speed,
-                            last_direction=last_direction,
-                        )
-                    )  # Set the new command to move left
+                    invoker.set_command(MoveLeftCommand(mouse, faster))
                 elif direction == "right":
-                    invoker.set_command(
-                        MoveRightCommand(
-                            mouse,
-                            speed=speed,
-                            last_direction=last_direction,
-                        )
-                    )  # Set the new command to move right
+                    invoker.set_command(MoveRightCommand(mouse, faster))
                 else:
                     print(f"Something went wrong: {task}")
