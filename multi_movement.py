@@ -99,33 +99,16 @@ class Mouse:
         self.h_move_iteration = 900
         self.v_move_iteration = 5000
         self.ease_func = easeInSine
+
+        self.y_middle = (
+            self.screen_height // 2 - 130
+        )  # Where the mouse will me roughly on the Y-axis
+
         print("Mouse initialised.")
         print(f"H Total steps: {int(self.h_duration * self.factor)}")
         print(f"V Total steps: {int(self.v_duration * self.factor)}")
         print(f"H Move iteration: {self.h_move_iteration}")
         print(f"V Move iteration: {self.v_move_iteration}")
-
-    def dummy_move(self):
-        current_x, current_y = win32api.GetCursorPos()  # Get current mouse position
-
-        # implement the action of moving the mouse to the left
-        # check self.should_stop after each step and stop if it's True
-        x = self.screen_width // 3 + random.randint(-25, 25)
-
-        y_move = random.randint(175, 220)
-        # y_middle = 775  # screen_height // 2 - 100
-        y_middle = self.screen_height // 2 - 130
-        if current_y > y_middle:
-            y = current_y - y_move
-        else:
-            y = current_y + y_move
-
-        total_steps = int(self.h_duration * self.factor)
-        for t in range(total_steps):
-            if self.should_stop:
-                print(f"Stop moving at step {t}")
-                break
-            ratio = self.ease_func(t / total_steps)
 
     def move_left(self, h_speed=None, v_speed=None):
         current_x, current_y = win32api.GetCursorPos()  # Get current mouse position
@@ -135,24 +118,25 @@ class Mouse:
 
         y_move = random.randint(175, 250)
 
-        y_middle = self.screen_height // 2 - 130
-        if current_y > y_middle:
+        if current_y > self.y_middle:
             y = current_y - y_move
         else:
             y = current_y + y_move
 
-        # Detect move type - Horizontal vs Vertical
-        # Calculate the change in x nd y
-        delta_x = abs(x - current_x)
-        delta_y = abs(y - current_y)
+        middle_x = self.screen_width // 2
 
-        # Determine the move type
-        if delta_x > delta_y:
-            duration = self.h_duration if h_speed is None else h_speed
-            iteration = self.h_move_iteration
-        else:
+        # Detect move type - Horizontal vs Vertical. If on left side already, must be moving vertically then.
+        if current_x < middle_x:
+            # VERTICAL
+            # print("/\\")
             duration = self.v_duration if v_speed is None else v_speed
             iteration = self.v_move_iteration
+        else:
+            # HORIZONTAL
+            # print("<<--------")
+            duration = self.h_duration if h_speed is None else h_speed
+            iteration = self.h_move_iteration
+
         total_steps = int(duration * self.factor)
         for t in range(total_steps):
             if self.should_stop:
@@ -177,7 +161,7 @@ class Mouse:
 
         # implement the action of moving the mouse to the right
         # check self.should_stop after each step and stop if it's True
-        x = self.screen_width * 2 // 3 + random.randint(-25, 25)
+        x = self.screen_width * 2 // 3 + random.randint(-25, 50)
 
         y_move = random.randint(175, 220)
         # y_middle = 775  # screen_height // 2 - 100
@@ -187,18 +171,20 @@ class Mouse:
         else:
             y = current_y + y_move
 
-        # Detect move type - Horizontal vs Vertical
-        # Calculate the change in x nd y
-        delta_x = abs(x - current_x)
-        delta_y = abs(y - current_y)
+        middle_x = self.screen_width // 2
 
-        # Determine the move type
-        if delta_x > delta_y:
-            duration = self.h_duration if h_speed is None else h_speed
-            iteration = self.h_move_iteration
-        else:
+        # Detect move type - Horizontal vs Vertical. If on right side already, must be moving vertically then.
+        if current_x > middle_x:
+            # VERTICAL
+            # print("              /\\")
             duration = self.v_duration if v_speed is None else v_speed
             iteration = self.v_move_iteration
+        else:
+            # HORIZONTAL
+            # print("-------->>")
+            duration = self.h_duration if h_speed is None else h_speed
+            iteration = self.h_move_iteration
+
         total_steps = int(duration * self.factor)
         for t in range(total_steps):
             if self.should_stop:
@@ -290,7 +276,7 @@ def print_detection(task):
 
 
 def check_and_move(queue):
-    memory = {"left": 0, "right": 0, "speed": 30}
+    memory = {"left": 0, "right": 0, "h_speed": 50, "v_speed": 50}
     while True:
         if keyboard.is_pressed("q"):
             print("Quitting.")
@@ -316,10 +302,11 @@ def check_and_move(queue):
                     v_speed = 5
 
                 # print(f"Putting {direction} {memory['speed']}")
-                queue.put((direction, memory["speed"], v_speed))
+                queue.put((direction, memory["h_speed"], memory["v_speed"]))
                 # print_detection((direction, a, ""))
                 memory[direction] = current_time
-                memory["speed"] = h_speed
+                memory["h_speed"] = h_speed
+                memory["v_speed"] = v_speed
 
 
 if __name__ == "__main__":
