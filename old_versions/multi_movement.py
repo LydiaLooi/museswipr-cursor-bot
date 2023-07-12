@@ -141,6 +141,22 @@ class Mouse:
 
         middle_x = self.screen_width // 2
 
+        if current_y < self.up_zone_y:  # above the upper threshold
+            # swipe to lower threshold
+            y = self.low_zone_y + random.randint(10, 30)
+
+        elif current_y > self.low_zone_y:  # below the lower threshold
+            # swipe to upper threshold
+            y = self.up_zone_y - random.randint(10, 30)
+        elif current_y > self.y_middle:  # in the dead zone but above the middle line
+            # Go to the offset top zone
+            y = self.up_zone_y - random.randint(10, 30)
+            x -= self.dead_zone_x_offset
+        else:  # in the dead zone but below the middle line
+            # go to the offset bottom zone
+            y = self.low_zone_y + random.randint(10, 30)
+            x -= self.dead_zone_x_offset
+
         # Detect move type - Horizontal vs Vertical. If on left side already, must be moving vertically then.
         if current_x < middle_x:
             # VERTICAL
@@ -148,31 +164,13 @@ class Mouse:
             duration = self.v_duration[speed] if speed else self.v_duration["SLOW"]
             iteration = self.v_move_iteration
 
-            if current_y < self.up_zone_y:  # above the upper threshold
-                # swipe to lower threshold
-                y = self.low_zone_y + random.randint(10, 30)
-
-            elif current_y > self.low_zone_y:  # below the lower threshold
-                # swipe to upper threshold
-                y = self.up_zone_y - random.randint(10, 30)
-            elif (
-                current_y > self.y_middle
-            ):  # in the dead zone but above the middle line
-                # Go to the offset top zone
-                y = self.up_zone_y - random.randint(10, 30)
-                x -= self.dead_zone_x_offset
-            else:  # in the dead zone but below the middle line
-                # go to the offset bottom zone
-                y = self.low_zone_y + random.randint(10, 30)
-                x -= self.dead_zone_x_offset
-
         else:
             # HORIZONTAL
             # print("<<--------")
             duration = self.h_duration[speed] if speed else self.h_duration["SLOW"]
             iteration = self.h_move_iteration
 
-            y = current_y + random.randint(-50, 50)
+            # y = current_y + random.randint(-50, 50)
 
         total_steps = int(duration * self.factor)
         for t in range(total_steps):
@@ -202,28 +200,26 @@ class Mouse:
 
         middle_x = self.screen_width // 2
 
+        if current_y < self.up_zone_y:  # above the upper threshold
+            # swipe to lower threshold
+            y = self.low_zone_y + random.randint(10, 30)
+
+        elif current_y > self.low_zone_y:  # below the lower threshold
+            # swipe to upper threshold
+            y = self.up_zone_y - random.randint(10, 30)
+        elif current_y > self.y_middle:  # in the dead zone but above the middle line
+            # Go to the offset top zone
+            y = self.up_zone_y - random.randint(10, 30)
+            x += self.dead_zone_x_offset
+        else:  # in the dead zone but below the middle line
+            # go to the offset bottom zone
+            y = self.low_zone_y + random.randint(10, 30)
+            x += self.dead_zone_x_offset
+
         # Detect move type - Horizontal vs Vertical. If on right side already, must be moving vertically then.
         if current_x > middle_x:
             duration = self.v_duration[speed] if speed else self.v_duration["SLOW"]
             iteration = self.v_move_iteration
-
-            if current_y < self.up_zone_y:  # above the upper threshold
-                # swipe to lower threshold
-                y = self.low_zone_y + random.randint(10, 30)
-
-            elif current_y > self.low_zone_y:  # below the lower threshold
-                # swipe to upper threshold
-                y = self.up_zone_y - random.randint(10, 30)
-            elif (
-                current_y > self.y_middle
-            ):  # in the dead zone but above the middle line
-                # Go to the offset top zone
-                y = self.up_zone_y - random.randint(10, 30)
-                x += self.dead_zone_x_offset
-            else:  # in the dead zone but below the middle line
-                # go to the offset bottom zone
-                y = self.low_zone_y + random.randint(10, 30)
-                x += self.dead_zone_x_offset
 
         else:
             # HORIZONTAL
@@ -231,7 +227,7 @@ class Mouse:
             duration = self.h_duration[speed] if speed else self.h_duration["SLOW"]
             iteration = self.h_move_iteration
 
-            y = current_y + random.randint(-50, 50)
+            # y = current_y + random.randint(-50, 50)
 
         # print(f"Duration R {duration}")
         total_steps = int(duration * self.factor)
