@@ -96,13 +96,13 @@ class Mouse:
 
         self.y_middle = self.screen_height // 2 - 130
 
-        self.duration = 50
-        self.faster_duration = 15
+        self.duration = 100  # 70
+        self.faster_duration = 60  # 50 # 35
 
         self.factor = 10000
 
-        self.h_move_iteration = 100
-        self.v_move_iteration = 100
+        self.h_move_iteration = 500
+        self.v_move_iteration = 1000
 
         self.ease_func = easeInSine
         print("Mouse initialised.")
@@ -111,7 +111,7 @@ class Mouse:
         print(f"Faster Duration Total steps: {int(self.faster_duration * self.factor)}")
 
         print(f"H Move iteration: {self.h_move_iteration}")
-        print(f"V Move iteration: {self.h_move_iteration}")
+        print(f"V Move iteration: {self.v_move_iteration}")
 
     def move_left(self, faster=False):
         current_x, current_y = win32api.GetCursorPos()  # Get current mouse position
@@ -266,7 +266,7 @@ def print_detection(task):
 
 
 def check_and_move(queue):
-    last_detection_time = {"left": 0, "right": 0}
+    last_detection_time = {"left": 0, "right": 0, "faster": True}
     while True:
         if keyboard.is_pressed("q"):
             print("Quitting.")
@@ -288,8 +288,9 @@ def check_and_move(queue):
                     140,
                 ):
                     faster = True
-                queue.put((direction, faster))
+                queue.put((direction, last_detection_time["faster"]))
                 last_detection_time[direction] = current_time
+                last_detection_time["faster"] = faster
 
 
 if __name__ == "__main__":
