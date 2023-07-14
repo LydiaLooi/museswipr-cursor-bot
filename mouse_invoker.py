@@ -1,4 +1,4 @@
-import threading
+from threading import Thread
 
 from mouse import Mouse
 from commands.command import Command
@@ -18,7 +18,7 @@ class MouseMoveInvoker:
         self.command = command
 
         # Start a new thread to execute the command
-        self.current_thread = threading.Thread(target=self.execute_command)
+        self.current_thread = Thread(target=self.execute_command)
         self.current_thread.start()
 
     def execute_command(self):

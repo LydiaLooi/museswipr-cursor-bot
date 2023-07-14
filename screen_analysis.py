@@ -1,11 +1,11 @@
-import pyautogui
+from pyautogui import pixel
 
 from PIL import ImageGrab
 
 
 def check_pixel_color(x, y, threshold=20):
     # Get the pixel color at the given coordinates
-    actual_color = pyautogui.pixel(x, y)
+    actual_color = pixel(x, y)
 
     # Check if any RGB value exceeds the threshold
     for value in actual_color:

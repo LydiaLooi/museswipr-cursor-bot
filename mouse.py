@@ -1,15 +1,15 @@
-import random
+from random import randint
 
 from pytweening import easeInSine, easeInOutPoly
 
-import win32api
+from win32api import GetCursorPos, GetSystemMetrics, SetCursorPos
 
 
 class Mouse:
     def __init__(self):
         self.should_stop = False
-        self.screen_width = win32api.GetSystemMetrics(0)
-        self.screen_height = win32api.GetSystemMetrics(1)
+        self.screen_width = GetSystemMetrics(0)
+        self.screen_height = GetSystemMetrics(1)
 
         self.y_middle = self.screen_height // 2 - 130
 
@@ -30,31 +30,7 @@ class Mouse:
         print(f"H Move iteration: {self.h_move_iteration}")
         print(f"V Move iteration: {self.v_move_iteration}")
 
-    def move_left(self, faster=False):
-        current_x, current_y = win32api.GetCursorPos()  # Get current mouse position
-
-        # implement the action of moving the mouse to the left
-        x = self.screen_width // 3 + random.randint(-25, 50)
-
-        y_move = random.randint(70, 120)
-
-        if current_y > self.y_middle:
-            y = self.y_middle - y_move
-        else:
-            y = self.y_middle + y_move
-
-        if faster:
-            duration = self.faster_duration
-        else:
-            duration = self.duration
-
-        # Movement type
-        if current_x < self.screen_width // 2:
-            iteration = self.v_move_iteration
-        else:
-            iteration = self.h_move_iteration
-
-        total_steps = int(duration * self.factor)
+    def _move_straight(self, current_x, current_y, x, y, iteration, total_steps):
         for t in range(total_steps):
             if self.should_stop:
                 # print("              Stop moving left")
@@ -66,21 +42,47 @@ class Mouse:
             if t % iteration == 0:
                 ratio = self.ease_func(t / total_steps)
 
-                win32api.SetCursorPos(
+                SetCursorPos(
                     (
                         int(current_x + (x - current_x) * ratio),
                         int(current_y + (y - current_y) * ratio),
                     )
                 )
 
+    def move_left(self, faster=False):
+        current_x, current_y = GetCursorPos()  # Get current mouse position
+
+        # implement the action of moving the mouse to the left
+        x = self.screen_width // 3 + randint(-25, 50)
+
+        y_move = randint(70, 120)
+
+        if current_y > self.y_middle:
+            y = self.y_middle - y_move
+        else:
+            y = self.y_middle + y_move
+
+        if faster:
+            duration = self.faster_duration
+        else:
+            duration = self.duration
+
+        # Movement type
+        if current_x < self.screen_width // 2:
+            iteration = self.v_move_iteration
+        else:
+            iteration = self.h_move_iteration
+
+        total_steps = int(duration * self.factor)
+        self._move_straight(current_x, current_y, x, y, iteration, total_steps)
+
     def move_right(self, faster=False):
-        current_x, current_y = win32api.GetCursorPos()  # Get current mouse position
+        current_x, current_y = GetCursorPos()  # Get current mouse position
 
-        # implement the action of moving the mouse to the right
         # check self.should_stop after each step and stop if it's True
-        x = self.screen_width * 2 // 3 + random.randint(-25, 25)
+        x = self.screen_width * 2 // 3 + randint(-25, 25)
 
-        y_move = random.randint(100, 150)
+        y_move = randint(100, 150)
 
         if current_y > self.y_middle:
             y = self.y_middle - y_move
@@ -100,22 +102,7 @@ class Mouse:
 
         total_steps = int(duration * self.factor)
 
-        for t in range(total_steps):
-            if self.should_stop:
-                # print("              Stop moving right")
-                if t < total_steps // 2:
-                    print("Stopped right too early")
-                break
-            # Attempt to reduce the performance impact of setting the cursor position every iteration
-            if t % iteration == 0:
-                ratio = self.ease_func(t / total_steps)
-
-                win32api.SetCursorPos(
-                    (
-                        int(current_x + (x - current_x) * ratio),
-                        int(current_y + (y - current_y) * ratio),
-                    )
-                )
+        self._move_straight(current_x, current_y, x, y, iteration, total_steps)
 
     def stop(self):
         self.should_stop = True

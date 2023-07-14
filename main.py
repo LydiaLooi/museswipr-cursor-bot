@@ -11,8 +11,8 @@ thread to break out of its loop), allowing the new task on the new Thread to beg
 """
 
 
-import time
-import keyboard
+from time import perf_counter
+from keyboard import is_pressed
 from multiprocessing import Pool, Manager
 from screen_analysis import check_pixel_color, check_pixel_color_range
 from mouse import Mouse
@@ -33,21 +33,21 @@ DEBOUNCE_DELAY = 0.06
 def print_detection(task):
     direction, h_speed, v_speed = task
     if direction == "left":
-        print(f"{time.perf_counter()} | {direction} {h_speed} {v_speed}")
+        print(f"{perf_counter()} | {direction} {h_speed} {v_speed}")
     else:
         print(
-            f"{time.perf_counter()} |                          {direction} {h_speed} {v_speed}"
+            f"{perf_counter()} |                          {direction} {h_speed} {v_speed}"
         )
 
 
 def check_and_move(queue):
     last_detection_time = {"left": 0, "right": 0, "faster": True}
     while True:
-        if keyboard.is_pressed("q"):
+        if is_pressed("q"):
             print("Quitting.")
             quit()
 
-        current_time = time.perf_counter()
+        current_time = perf_counter()
 
         for direction in ["left", "right"]:
             pixel_x = LEFT_PIXEL_X if direction == "left" else RIGHT_PIXEL_X
@@ -74,18 +74,19 @@ if __name__ == "__main__":
     # Create an instance of Mouse and Invoker
     mouse = Mouse()
     invoker = MouseMoveInvoker(mouse)
+    set_command = invoker.set_command
 
     with Manager() as manager:
         task_queue = manager.Queue()
-        with Pool(processes=6) as pool:  # Create a pool of 4 worker processes
+        with Pool(processes=6) as pool:  # Create a pool of 6 worker processes
             pool.apply_async(check_and_move, (task_queue,))
             while True:
                 task = task_queue.get()
 
                 direction, faster = task
                 if direction == "left":
-                    invoker.set_command(MoveLeftCommand(mouse, faster))
+                    set_command(MoveLeftCommand(mouse, faster))
                 elif direction == "right":
-                    invoker.set_command(MoveRightCommand(mouse, faster))
+                    set_command(MoveRightCommand(mouse, faster))
                 else:
                     print(f"Something went wrong: {task}")
