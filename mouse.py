@@ -1,6 +1,6 @@
 from random import randint
 
-from pytweening import easeInSine, easeInOutPoly
+from pytweening import easeInSine, easeInOutPoly, easeOutSine, linear
 
 from win32api import GetCursorPos, GetSystemMetrics, SetCursorPos
 
@@ -13,29 +13,38 @@ class Mouse:
 
         self.y_middle = self.screen_height // 2 - 130
 
-        self.duration = 100  # 70
-        self.faster_duration = 60  # 50 # 35
-
+        self.duration = 70  # 100 60fps
+        self.faster_h_duration = 45  # 6 60 fps $ 4??fps 45 is good for horizontalGHOST but not enough for vertical
+        self.faster_v_duration = 45
         self.factor = 10000
 
         self.h_move_iteration = 500
-        self.v_move_iteration = 1000
+        self.v_move_iteration = 500
 
-        self.ease_func = easeInOutPoly
+        self.ease_func = easeOutSine
         print("Mouse initialised.")
 
         print(f"Normal Duration Total steps: {int(self.duration * self.factor)}")
-        print(f"Faster Duration Total steps: {int(self.faster_duration * self.factor)}")
+        print(
+            f"Faster Duration Total steps: {int(self.faster_h_duration * self.factor)}"
+        )
 
         print(f"H Move iteration: {self.h_move_iteration}")
         print(f"V Move iteration: {self.v_move_iteration}")
 
     def _move_straight(self, current_x, current_y, x, y, iteration, total_steps):
+        early_threshold = total_steps // 2
         for t in range(total_steps):
             if self.should_stop:
-                # print("              Stop moving left")
-                if t < total_steps // 2:
-                    print("Stopped left too early")
+                if t < early_threshold:
+                    ratio = self.ease_func(early_threshold / total_steps)
+
+                    SetCursorPos(
+                        (
+                            int(current_x + (x - current_x) * ratio),
+                            int(current_y + (y - current_y) * ratio),
+                        )
+                    )
                 break
 
             # Attempt to reduce the performance impact of setting the cursor position every iteration
@@ -55,7 +64,7 @@ class Mouse:
         # implement the action of moving the mouse to the left
         x = self.screen_width // 3 + randint(-25, 50)
 
-        y_move = randint(70, 120)
+        y_move = randint(200, 230)
 
         if current_y > self.y_middle:
             y = self.y_middle - y_move
@@ -63,13 +72,15 @@ class Mouse:
             y = self.y_middle + y_move
 
         if faster:
-            duration = self.faster_duration
+            duration = self.faster_h_duration
         else:
             duration = self.duration
 
         # Movement type
         if current_x < self.screen_width // 2:
             iteration = self.v_move_iteration
+            if faster:
+                duration = self.faster_v_duration
         else:
             iteration = self.h_move_iteration
 
@@ -90,13 +101,15 @@ class Mouse:
             y = self.y_middle + y_move
 
         if faster:
-            duration = self.faster_duration
+            duration = self.faster_h_duration
         else:
             duration = self.duration
 
         # Movement type
         if current_x < self.screen_width // 2:
             iteration = self.v_move_iteration
+            if faster:
+                duration = self.faster_v_duration
         else:
             iteration = self.h_move_iteration
 

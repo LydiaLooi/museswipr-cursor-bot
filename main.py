@@ -27,7 +27,7 @@ RIGHT_PIXEL_X = 1216
 RIGHT_PIXEL_Y = LEFT_PIXEL_Y
 
 # Set the debounce delay (in seconds)
-DEBOUNCE_DELAY = 0.06
+DEBOUNCE_DELAY = 0.06  # 0.05 for 60fps
 
 
 def print_detection(task):
@@ -63,6 +63,10 @@ def check_and_move(queue):
                     140,
                 ):
                     faster = True
+                    if not last_detection_time[
+                        "faster"
+                    ]:  # Overrides the last slow swipe if this next one is gonna be faster
+                        last_detection_time["faster"] = True
                 queue.put((direction, last_detection_time["faster"]))
                 last_detection_time[direction] = current_time
                 last_detection_time["faster"] = faster
