@@ -1,8 +1,9 @@
 from random import randint
 
-from pytweening import easeInSine, easeInOutPoly, easeOutSine, linear
+from pytweening import easeOutSine
 
 from win32api import GetCursorPos, GetSystemMetrics, SetCursorPos
+from yaml import safe_load
 
 
 class Mouse:
@@ -11,15 +12,16 @@ class Mouse:
         self.screen_width = GetSystemMetrics(0)
         self.screen_height = GetSystemMetrics(1)
 
-        self.y_middle = self.screen_height // 2 - 130
+        with open("config.yaml") as config_file:
+            config = safe_load(config_file)
 
-        self.duration = 120  # 100 60fps
-        self.faster_h_duration = 100  # 6 60 fps $ 4??fps 45 is good for horizontalGHOST but not enough for vertical
-        self.faster_v_duration = 75
-        self.factor = 10000
-
-        self.h_move_iteration = 500
-        self.v_move_iteration = 500
+        self.y_middle = config["y_middle"]
+        self.duration = config["duration"]
+        self.faster_h_duration = config["faster_h_duration"]
+        self.faster_v_duration = config["faster_v_duration"]
+        self.factor = config["factor"]
+        self.h_move_iteration = config["h_move_iteration"]
+        self.v_move_iteration = config["v_move_iteration"]
 
         self.ease_func = easeOutSine
         print("Mouse initialised.")
@@ -66,24 +68,25 @@ class Mouse:
 
         y_move = randint(180, 220)
 
+        # Determine whether the cursor should be moving up or down.
         if current_y > self.y_middle:
             y = self.y_middle - y_move
         else:
             y = self.y_middle + y_move
 
-        if faster:
-            duration = self.faster_h_duration
-        else:
-            duration = self.duration
+        duration = self.duration
 
         # Movement type
         if current_x < self.screen_width // 2:
+            # Vertical
             iteration = self.v_move_iteration
             if faster:
                 duration = self.faster_v_duration
         else:
+            # Horizontal
             iteration = self.h_move_iteration
-
+            if faster:
+                duration = self.faster_h_duration
         total_steps = int(duration * self.factor)
         self._move_straight(current_x, current_y, x, y, iteration, total_steps)
 
@@ -100,18 +103,19 @@ class Mouse:
         else:
             y = self.y_middle + y_move
 
-        if faster:
-            duration = self.faster_h_duration
-        else:
-            duration = self.duration
+        duration = self.duration
 
         # Movement type
         if current_x < self.screen_width // 2:
+            # Vertical
             iteration = self.v_move_iteration
             if faster:
                 duration = self.faster_v_duration
         else:
+            # Horizontal
             iteration = self.h_move_iteration
+            if faster:
+                duration = self.faster_h_duration
 
         total_steps = int(duration * self.factor)
 
