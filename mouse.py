@@ -13,9 +13,9 @@ class Mouse:
 
         self.y_middle = self.screen_height // 2 - 130
 
-        self.duration = 70  # 100 60fps
-        self.faster_h_duration = 45  # 6 60 fps $ 4??fps 45 is good for horizontalGHOST but not enough for vertical
-        self.faster_v_duration = 45
+        self.duration = 120  # 100 60fps
+        self.faster_h_duration = 100  # 6 60 fps $ 4??fps 45 is good for horizontalGHOST but not enough for vertical
+        self.faster_v_duration = 75
         self.factor = 10000
 
         self.h_move_iteration = 500
