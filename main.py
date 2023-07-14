@@ -27,7 +27,7 @@ RIGHT_PIXEL_X = 1216
 RIGHT_PIXEL_Y = LEFT_PIXEL_Y
 
 # Set the debounce delay (in seconds)
-DEBOUNCE_DELAY = 0.05  # 0.05 for 60fps
+DEBOUNCE_DELAY = 0.0425  # 0.05 for 60fps # # 0.04 and less starts double detecting at 16.5 scroll at 144 fps
 
 
 def print_detection(task):

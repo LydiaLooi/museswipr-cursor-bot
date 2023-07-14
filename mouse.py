@@ -64,7 +64,7 @@ class Mouse:
         # implement the action of moving the mouse to the left
         x = self.screen_width // 3 + randint(-25, 50)
 
-        y_move = randint(200, 230)
+        y_move = randint(180, 220)
 
         if current_y > self.y_middle:
             y = self.y_middle - y_move
@@ -93,7 +93,7 @@ class Mouse:
         # check self.should_stop after each step and stop if it's True
         x = self.screen_width * 2 // 3 + randint(-25, 25)
 
-        y_move = randint(100, 150)
+        y_move = randint(180, 220)
 
         if current_y > self.y_middle:
             y = self.y_middle - y_move
