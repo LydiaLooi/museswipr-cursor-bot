@@ -23,30 +23,29 @@ RIGHT_PIXEL_Y = config["RIGHT_PIXEL_Y"]
 DEBOUNCE_DELAY = config["DEBOUNCE_DELAY"]
 
 
-def check_and_move(queue, local_mem):
+def check_and_move(queue, direction, local_mem):
     while True:
         current_time = perf_counter()
 
-        for direction in ["left", "right"]:
-            pixel_x = LEFT_PIXEL_X if direction == "left" else RIGHT_PIXEL_X
-            pixel_y = LEFT_PIXEL_Y if direction == "left" else RIGHT_PIXEL_Y
-            a = current_time - local_mem[direction]
-            if check_pixel_color(pixel_x, pixel_y) and a >= DEBOUNCE_DELAY:
-                faster = False
-                if check_pixel_color_range(
-                    LEFT_PIXEL_X,
-                    LEFT_PIXEL_Y - 200,
-                    RIGHT_PIXEL_X,
-                    RIGHT_PIXEL_Y,
-                    140,
-                ):
-                    faster = True
-                    # Overrides the last slow swipe if this next one is gonna be faster
-                    if not local_mem["faster"]:
-                        local_mem["faster"] = True
-                queue.put((direction, local_mem["faster"]))
-                local_mem[direction] = current_time
-                local_mem["faster"] = faster
+        pixel_x = LEFT_PIXEL_X if direction == "left" else RIGHT_PIXEL_X
+        pixel_y = LEFT_PIXEL_Y if direction == "left" else RIGHT_PIXEL_Y
+        a = current_time - local_mem[direction]
+        if check_pixel_color(pixel_x, pixel_y) and a >= DEBOUNCE_DELAY:
+            faster = False
+            if check_pixel_color_range(
+                LEFT_PIXEL_X,
+                LEFT_PIXEL_Y - 200,
+                RIGHT_PIXEL_X,
+                RIGHT_PIXEL_Y,
+                140,
+            ):
+                faster = True
+                # Overrides the last slow swipe if this next one is gonna be faster
+                if not local_mem["faster"]:
+                    local_mem["faster"] = True
+            queue.put((direction, local_mem["faster"]))
+            local_mem[direction] = current_time
+            local_mem["faster"] = faster
 
 
 if __name__ == "__main__":
@@ -62,8 +61,9 @@ if __name__ == "__main__":
             task_queue = manager.Queue()
             local_mem = manager.dict({"left": 0, "right": 0, "faster": True})
 
-            with Pool(processes=1) as pool:  # Create a pool of 6 worker processes
-                pool.apply_async(check_and_move, (task_queue, local_mem))
+            with Pool(processes=2) as pool:  # Create a pool of 6 worker processes
+                pool.apply_async(check_and_move, (task_queue, "left", local_mem))
+                pool.apply_async(check_and_move, (task_queue, "right", local_mem))
                 while True:
                     if is_pressed("q"):
                         print("Quitting...")
