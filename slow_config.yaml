@@ -1,12 +1,11 @@
-# Slow Config
-# But it's actually pretty good and can do GHOST 1,2x 99.58% and Bomba Typhoon 98%
+# But it's actually pretty good and can do GHOST 1,2x
 LEFT_PIXEL_X: 709
 LEFT_PIXEL_Y: 840
 
 RIGHT_PIXEL_X: 1216
 RIGHT_PIXEL_Y: 840
 
-DEBOUNCE_DELAY: 0.0425
+DEBOUNCE_DELAY: 0.00
 
 y_middle: 410
 duration: 120

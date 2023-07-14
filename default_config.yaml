@@ -1,0 +1,27 @@
+# MuseSwipr Settings:
+# 144 FPS
+# 5.5 Speed
+# 30-35 TCD
+# 30 Frames
+# 30 degrees
+# 1:50.50
+# 16.5 - 18 scroll speed
+
+# Can hit most patterns (struggles with long fast stacks)
+# Realistic acc drops
+
+LEFT_PIXEL_X: 709
+LEFT_PIXEL_Y: 840
+
+RIGHT_PIXEL_X: 1216
+RIGHT_PIXEL_Y: 840
+
+DEBOUNCE_DELAY: 0.0425
+
+y_middle: 410
+duration: 120
+faster_h_duration: 100
+faster_v_duration: 75
+factor: 10000
+h_move_iteration: 500
+v_move_iteration: 500

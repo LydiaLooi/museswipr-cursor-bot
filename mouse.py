@@ -1,6 +1,6 @@
 from random import randint
 
-from pytweening import easeOutSine
+from pytweening import easeOutQuad
 
 from win32api import GetCursorPos, GetSystemMetrics, SetCursorPos
 from yaml import safe_load
@@ -23,7 +23,7 @@ class Mouse:
         self.h_move_iteration = config["h_move_iteration"]
         self.v_move_iteration = config["v_move_iteration"]
 
-        self.ease_func = easeOutSine
+        self.ease_func = easeOutQuad
         print("Mouse initialised.")
 
         print(f"Normal Duration Total steps: {int(self.duration * self.factor)}")
@@ -35,7 +35,7 @@ class Mouse:
         print(f"V Move iteration: {self.v_move_iteration}")
 
     def _move_straight(self, current_x, current_y, x, y, iteration, total_steps):
-        early_threshold = total_steps // 2
+        early_threshold = total_steps * 0.7
         for t in range(total_steps):
             if self.should_stop:
                 if t < early_threshold:
