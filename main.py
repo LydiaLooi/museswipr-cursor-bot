@@ -23,8 +23,7 @@ RIGHT_PIXEL_Y = config["RIGHT_PIXEL_Y"]
 DEBOUNCE_DELAY = config["DEBOUNCE_DELAY"]
 
 
-def check_and_move(queue):
-    local_mem = {"left": 0, "right": 0, "faster": True}
+def check_and_move(queue, local_mem):
     while True:
         current_time = perf_counter()
 
@@ -61,8 +60,10 @@ if __name__ == "__main__":
     try:
         with Manager() as manager:
             task_queue = manager.Queue()
+            local_mem = manager.dict({"left": 0, "right": 0, "faster": True})
+
             with Pool(processes=1) as pool:  # Create a pool of 6 worker processes
-                pool.apply_async(check_and_move, (task_queue,))
+                pool.apply_async(check_and_move, (task_queue, local_mem))
                 while True:
                     if is_pressed("q"):
                         print("Quitting...")
