@@ -10,8 +10,8 @@ DEBOUNCE_DELAY: 0.0425
 
 y_middle: 410
 duration: 120
-faster_h_duration: 200
-faster_v_duration: 200
+faster_h_duration: 180
+faster_v_duration: 170
 factor: 10000
 h_move_iteration: 500
 v_move_iteration: 500
