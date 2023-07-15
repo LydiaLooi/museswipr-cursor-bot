@@ -15,3 +15,9 @@ faster_v_duration: 170
 factor: 10000
 h_move_iteration: 500
 v_move_iteration: 500
+
+
+# Determine whether horizontal swipes are "true" horizontal swipes
+# 0: False 1: True 
+left_h_move_true: 0
+right_h_move_true: 1

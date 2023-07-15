@@ -26,6 +26,9 @@ class Mouse:
         self.h_move_iteration = config["h_move_iteration"]
         self.v_move_iteration = config["v_move_iteration"]
 
+        self.left_h_move_true = config["left_h_move_true"]
+        self.right_h_move_true = config["right_h_move_true"]
+
         self.ease_func = easeOutQuad
         print("Mouse initialised.")
 
@@ -138,8 +141,9 @@ class Mouse:
                 extra = True
         else:
             # Horizontal
+            if self.left_h_move_true:
+                y = current_y + randint(-20, 20)
             iteration = self.h_move_iteration
-            y = current_y + randint(-20, 20)
             if speed == 1:
                 duration = self.faster_h_duration
             elif speed == 2:
@@ -163,7 +167,7 @@ class Mouse:
         duration = self.duration
         extra = False
         # Movement type
-        if current_x < self.screen_width // 2:
+        if current_x > self.screen_width // 2:
             # Vertical
             iteration = self.v_move_iteration
             if speed == 1:
@@ -172,6 +176,8 @@ class Mouse:
                 extra = True
         else:
             # Horizontal
+            if self.right_h_move_true:
+                y = current_y + randint(-20, 20)
             iteration = self.h_move_iteration
             if speed == 1:
                 duration = self.faster_h_duration
