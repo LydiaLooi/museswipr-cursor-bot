@@ -5,6 +5,9 @@ from math import sin, pi
 from win32api import GetCursorPos, GetSystemMetrics, SetCursorPos
 from yaml import safe_load
 
+from time import sleep
+from keyboard import is_pressed
+
 
 class Mouse:
     def __init__(self):
@@ -34,11 +37,10 @@ class Mouse:
         print(f"H Move iteration: {self.h_move_iteration}")
         print(f"V Move iteration: {self.v_move_iteration}")
 
-    def _move_straight(
-        self, current_x, current_y, x, y, iteration, total_steps, extra=False
-    ):
+    def _move_straight(self, x, y, iteration, total_steps, extra=False):
+        current_x, current_y = GetCursorPos()  # Get current mouse position
         early_threshold = total_steps * 0.7
-        amplitude = 200  # This controls the curve height
+        amplitude = 150  # This controls the curve height
 
         for t in range(total_steps):
             if self.should_stop:
@@ -50,11 +52,8 @@ class Mouse:
                         displacement = amplitude * sin(
                             pi * ratio
                         )  # A simple sine curve
-                        # Reverse displacement if on left or top half of screen
-                        if (
-                            current_x < self.screen_width / 2
-                            or current_y < self.y_middle
-                        ):
+                        # Reverse displacement if on top half of screen
+                        if current_y < self.y_middle:
                             displacement = -displacement
 
                     dx = abs(x - current_x)
@@ -87,8 +86,8 @@ class Mouse:
                 displacement = 0
                 if extra:
                     displacement = amplitude * sin(pi * ratio)  # A simple sine curve
-                    # Reverse displacement if on left or top half of screen
-                    if current_x < self.screen_width / 2 or current_y < self.y_middle:
+                    # Reverse displacement if on top half of screen
+                    if current_y < self.y_middle:
                         displacement = -displacement
 
                 # If the X distance is longer, modify the y values. Otherwise, modify the x values.
@@ -133,19 +132,20 @@ class Mouse:
         if current_x < self.screen_width // 2:
             # Vertical
             iteration = self.v_move_iteration
-            if speed >= 1:
+            if speed == 1:
                 duration = self.faster_v_duration
             elif speed == 2:
                 extra = True
         else:
             # Horizontal
             iteration = self.h_move_iteration
-            if speed >= 1:
+            y = current_y + randint(-20, 20)
+            if speed == 1:
                 duration = self.faster_h_duration
             elif speed == 2:
                 extra = True
         total_steps = int(duration * self.factor)
-        self._move_straight(current_x, current_y, x, y, iteration, total_steps, extra)
+        self._move_straight(x, y, iteration, total_steps, extra)
 
     def move_right(self, speed=0):
         current_x, current_y = GetCursorPos()  # Get current mouse position
@@ -179,7 +179,7 @@ class Mouse:
                 extra = True
 
         total_steps = int(duration * self.factor)
-        self._move_straight(current_x, current_y, x, y, iteration, total_steps, extra)
+        self._move_straight(x, y, iteration, total_steps, extra)
 
     def stop(self):
         self.should_stop = True

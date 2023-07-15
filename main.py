@@ -49,20 +49,20 @@ def check_and_move(queue, local_mem):
 
 
 if __name__ == "__main__":
-    print("Starting... press 'e' to begin detecting.")
-    # Create an instance of Mouse and Invoker
-    mouse = Mouse()
-    invoker = MouseMoveInvoker(mouse)
-    set_command = invoker.set_command
-    start = False
-    while start is False:
-        if is_pressed("e"):
-            start = True
-            print("Detection has begun.\n")
-
-    start_time = perf_counter()
-
     try:
+        print("Starting... press 'e' to begin detecting.")
+        # Create an instance of Mouse and Invoker
+        mouse = Mouse()
+        invoker = MouseMoveInvoker(mouse)
+        set_command = invoker.set_command
+        start = False
+        while start is False:
+            if is_pressed("e"):
+                start = True
+                print("Detection has begun.\n")
+
+        start_time = perf_counter()
+
         with Manager() as manager:
             task_queue = manager.Queue()
             local_mem = manager.dict(
@@ -85,6 +85,8 @@ if __name__ == "__main__":
                         print(local_mem)
                     task = task_queue.get()
                     direction, speed = task
+                    # if speed == 2:
+                    #     print(f"Moving {direction} with speed {speed}")
                     if direction == "left":
                         set_command(MoveLeftCommand(mouse, speed))
                     elif direction == "right":
