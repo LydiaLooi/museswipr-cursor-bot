@@ -33,22 +33,19 @@ def check_and_move(queue, local_mem):
             pixel_y = LEFT_PIXEL_Y if direction == "left" else RIGHT_PIXEL_Y
             a = current_time - local_mem[direction]
             if check_pixel_color(pixel_x, pixel_y) and a >= DEBOUNCE_DELAY:
-                faster = False
-                if check_pixel_color_range(
+                speed = check_pixel_color_range(  # Screenshot is W 508px x H 201px
                     LEFT_PIXEL_X,
                     LEFT_PIXEL_Y - 200,
                     RIGHT_PIXEL_X,
                     RIGHT_PIXEL_Y,
                     140,
-                ):
-                    faster = True
+                )
+                if speed > local_mem["speed"]:
                     # Overrides the last slow swipe if this next one is gonna be faster
-                    if not local_mem["faster"]:
-                        local_mem["faster"] = True
-
-                queue.put((direction, local_mem["faster"]))
+                    local_mem["speed"] = speed
+                queue.put((direction, local_mem["speed"]))
                 local_mem[direction] = current_time
-                local_mem["faster"] = faster
+                local_mem["speed"] = speed
 
 
 if __name__ == "__main__":
@@ -69,7 +66,7 @@ if __name__ == "__main__":
         with Manager() as manager:
             task_queue = manager.Queue()
             local_mem = manager.dict(
-                {"left": 0, "right": 0, "faster": True, "check_count": 0}
+                {"left": 0, "right": 0, "speed": 0, "check_count": 0}
             )
 
             with Pool(processes=1) as pool:
@@ -87,11 +84,11 @@ if __name__ == "__main__":
                     elif is_pressed("e"):
                         print(local_mem)
                     task = task_queue.get()
-                    direction, faster = task
+                    direction, speed = task
                     if direction == "left":
-                        set_command(MoveLeftCommand(mouse, faster))
+                        set_command(MoveLeftCommand(mouse, speed))
                     elif direction == "right":
-                        set_command(MoveRightCommand(mouse, faster))
+                        set_command(MoveRightCommand(mouse, speed))
                     else:
                         print(f"Something went wrong: {task}")
     except KeyboardInterrupt:

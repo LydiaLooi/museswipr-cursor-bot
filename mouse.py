@@ -1,7 +1,7 @@
 from random import randint
 
 from pytweening import easeOutQuad
-
+from math import sin, pi
 from win32api import GetCursorPos, GetSystemMetrics, SetCursorPos
 from yaml import safe_load
 
@@ -34,33 +34,86 @@ class Mouse:
         print(f"H Move iteration: {self.h_move_iteration}")
         print(f"V Move iteration: {self.v_move_iteration}")
 
-    def _move_straight(self, current_x, current_y, x, y, iteration, total_steps):
+    def _move_straight(
+        self, current_x, current_y, x, y, iteration, total_steps, extra=False
+    ):
         early_threshold = total_steps * 0.7
+        amplitude = 200  # This controls the curve height
+
         for t in range(total_steps):
             if self.should_stop:
                 if t < early_threshold:
                     ratio = self.ease_func(early_threshold / total_steps)
+                    # Calculate the displacement for the curve
+                    displacement = 0
+                    if extra:
+                        displacement = amplitude * sin(
+                            pi * ratio
+                        )  # A simple sine curve
+                        # Reverse displacement if on left or top half of screen
+                        if (
+                            current_x < self.screen_width / 2
+                            or current_y < self.y_middle
+                        ):
+                            displacement = -displacement
 
-                    SetCursorPos(
-                        (
-                            int(current_x + (x - current_x) * ratio),
-                            int(current_y + (y - current_y) * ratio),
+                    dx = abs(x - current_x)
+                    dy = abs(y - current_y)
+                    if dx > dy:
+                        SetCursorPos(
+                            (
+                                int(current_x + (x - current_x) * ratio),
+                                int(
+                                    current_y + (y - current_y) * ratio + displacement
+                                ),  # Add displacement to Y
+                            )
                         )
-                    )
+                    else:
+                        SetCursorPos(
+                            (
+                                int(
+                                    current_x + (x - current_x) * ratio + displacement
+                                ),  # Add displacement to X
+                                int(current_y + (y - current_y) * ratio),
+                            )
+                        )
                 break
 
             # Attempt to reduce the performance impact of setting the cursor position every iteration
             if t % iteration == 0:
                 ratio = self.ease_func(t / total_steps)
 
-                SetCursorPos(
-                    (
-                        int(current_x + (x - current_x) * ratio),
-                        int(current_y + (y - current_y) * ratio),
-                    )
-                )
+                # Calculate the displacement for the curve
+                displacement = 0
+                if extra:
+                    displacement = amplitude * sin(pi * ratio)  # A simple sine curve
+                    # Reverse displacement if on left or top half of screen
+                    if current_x < self.screen_width / 2 or current_y < self.y_middle:
+                        displacement = -displacement
 
-    def move_left(self, faster=False):
+                # If the X distance is longer, modify the y values. Otherwise, modify the x values.
+                dx = abs(x - current_x)
+                dy = abs(y - current_y)
+                if dx > dy:
+                    SetCursorPos(
+                        (
+                            int(current_x + (x - current_x) * ratio),
+                            int(
+                                current_y + (y - current_y) * ratio + displacement
+                            ),  # Add displacement to Y
+                        )
+                    )
+                else:
+                    SetCursorPos(
+                        (
+                            int(
+                                current_x + (x - current_x) * ratio + displacement
+                            ),  # Add displacement to X
+                            int(current_y + (y - current_y) * ratio),
+                        )
+                    )
+
+    def move_left(self, speed=0):
         current_x, current_y = GetCursorPos()  # Get current mouse position
 
         # implement the action of moving the mouse to the left
@@ -75,22 +128,26 @@ class Mouse:
             y = self.y_middle + y_move
 
         duration = self.duration
-
+        extra = False
         # Movement type
         if current_x < self.screen_width // 2:
             # Vertical
             iteration = self.v_move_iteration
-            if faster:
+            if speed >= 1:
                 duration = self.faster_v_duration
+            elif speed == 2:
+                extra = True
         else:
             # Horizontal
             iteration = self.h_move_iteration
-            if faster:
+            if speed >= 1:
                 duration = self.faster_h_duration
+            elif speed == 2:
+                extra = True
         total_steps = int(duration * self.factor)
-        self._move_straight(current_x, current_y, x, y, iteration, total_steps)
+        self._move_straight(current_x, current_y, x, y, iteration, total_steps, extra)
 
-    def move_right(self, faster=False):
+    def move_right(self, speed=0):
         current_x, current_y = GetCursorPos()  # Get current mouse position
 
         # check self.should_stop after each step and stop if it's True
@@ -104,22 +161,25 @@ class Mouse:
             y = self.y_middle + y_move
 
         duration = self.duration
-
+        extra = False
         # Movement type
         if current_x < self.screen_width // 2:
             # Vertical
             iteration = self.v_move_iteration
-            if faster:
+            if speed == 1:
                 duration = self.faster_v_duration
+            elif speed == 2:
+                extra = True
         else:
             # Horizontal
             iteration = self.h_move_iteration
-            if faster:
+            if speed == 1:
                 duration = self.faster_h_duration
+            elif speed == 2:
+                extra = True
 
         total_steps = int(duration * self.factor)
-
-        self._move_straight(current_x, current_y, x, y, iteration, total_steps)
+        self._move_straight(current_x, current_y, x, y, iteration, total_steps, extra)
 
     def stop(self):
         self.should_stop = True
