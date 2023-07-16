@@ -181,7 +181,7 @@ class Mouse:
             if self.left_h_move_true:
                 y = max(
                     self.y_lower_bound,
-                    min(current_y + randint(-20, 20), self.y_lower_bound),
+                    min(current_y + randint(-20, 20), self.y_upper_bound),
                 )
             iteration = self.h_move_iteration
             if speed == 1:
@@ -224,7 +224,7 @@ class Mouse:
             if self.right_h_move_true:
                 y = max(
                     self.y_lower_bound,
-                    min(current_y + randint(-20, 20), self.y_lower_bound),
+                    min(current_y + randint(-20, 20), self.y_upper_bound),
                 )
             iteration = self.h_move_iteration
             if speed == 1:
