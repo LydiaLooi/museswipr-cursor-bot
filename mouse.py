@@ -9,6 +9,16 @@ from time import sleep
 from keyboard import is_pressed
 
 
+def get_displacement(
+    displacement, horizontal_last, current_x, current_y, x_middle, y_middle
+):
+    if horizontal_last and current_x < x_middle:
+        displacement = -displacement
+    elif not horizontal_last and current_x > x_middle:
+        displacement = -displacement
+    return displacement
+
+
 class Mouse:
     def __init__(self):
         self.should_stop = False
@@ -77,20 +87,15 @@ class Mouse:
                             # Else....
                             #                   in left of screen .. POS
                             #                   in right of screen NEG
-                            if horizontal_last and current_x < self.x_middle:
-                                displacement = -displacement
-                            elif (
-                                not horizontal_last
-                                and current_x > self.x_middle
-                                and current_y > self.y_middle
-                            ):
-                                displacement = -displacement
-                            elif (
-                                not horizontal_last
-                                and current_x < self.x_middle
-                                and current_y < self.y_middle
-                            ):
-                                displacement = -displacement
+                            displacement = get_displacement(
+                                displacement,
+                                horizontal_last,
+                                current_x,
+                                current_y,
+                                self.x_middle,
+                                self.y_middle,
+                            )
+
                         else:
                             # Reverse displacement if on top half of screen and is a horizontal swipe
                             # Always makes it curve outwards from the middle...
@@ -132,20 +137,14 @@ class Mouse:
                         # Else....
                         #                   in left of screen .. POS
                         #                   in right of screen NEG
-                        if horizontal_last and current_x < self.x_middle:
-                            displacement = -displacement
-                        elif (
-                            not horizontal_last
-                            and current_x > self.x_middle
-                            and current_y > self.y_middle
-                        ):
-                            displacement = -displacement
-                        elif (
-                            not horizontal_last
-                            and current_x < self.x_middle
-                            and current_y < self.y_middle
-                        ):
-                            displacement = -displacement
+                        displacement = get_displacement(
+                            displacement,
+                            horizontal_last,
+                            current_x,
+                            current_y,
+                            self.x_middle,
+                            self.y_middle,
+                        )
                     else:
                         # Reverse displacement if on top half of screen and is a horizontal swipe
                         # Always makes it curve outwards from the middle...

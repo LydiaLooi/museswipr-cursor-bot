@@ -72,6 +72,7 @@ if __name__ == "__main__":
                 {"left": 0, "right": 0, "speed": 0, "check_count": 0}
             )
             last_swipe_horizontal = True
+            last_column = "left"
 
             with Pool(processes=1) as pool:
                 pool.apply_async(check_and_move, (task_queue, local_mem))
@@ -90,31 +91,25 @@ if __name__ == "__main__":
                     task = task_queue.get()
                     direction, speed = task
 
-                    current_x, _ = GetCursorPos()  # Get current mouse position
+                    if last_column != direction:
+                        # Vertical
+                        is_horziontal = True
+
+                    else:
+                        is_horziontal = False
 
                     if direction == "left":
-                        # Movement type
-                        if current_x < mouse.x_middle:
-                            # Vertical
-                            is_horziontal = False
-                        else:
-                            is_horziontal = True
                         set_command(
                             MoveLeftCommand(mouse, speed, last_swipe_horizontal)
                         )
                     elif direction == "right":
-                        # Movement type
-                        if current_x > mouse.x_middle:
-                            # Vertical
-                            is_horziontal = False
-                        else:
-                            is_horziontal = True
                         set_command(
                             MoveRightCommand(mouse, speed, last_swipe_horizontal)
                         )
                     else:
                         print(f"Something went wrong: {task}")
                     last_swipe_horizontal = is_horziontal
+                    last_column = direction
     except KeyboardInterrupt:
         print("Keyboard interrupt detected.")
         exit(0)  # Exit the program
