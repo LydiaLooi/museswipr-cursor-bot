@@ -5,18 +5,20 @@ from math import sin, pi
 from win32api import GetCursorPos, GetSystemMetrics, SetCursorPos
 from yaml import safe_load
 
-from time import sleep
-from keyboard import is_pressed
 
-
-def get_displacement(
-    displacement, horizontal_last, current_x, current_y, x_middle, y_middle
-):
+# TODO: This currently roughly tries to get cool flowy curves but only for 3 stacks and if the horizontal swipes begin
+# from the lower half of the screen... like the shape below
+#   _  |   _
+# |  \ |  / \
+#  \___|___/
+#      |
+# To get it to always circle properly, it needs to know if the previous vertical swipe was negative displaced or not.
+def is_negative_displacement(horizontal_last, current_x, current_y, x_middle, y_middle):
     if horizontal_last and current_x < x_middle:
-        displacement = -displacement
+        return True
     elif not horizontal_last and current_x > x_middle:
-        displacement = -displacement
-    return displacement
+        return True
+    return False
 
 
 class Mouse:
@@ -81,20 +83,14 @@ class Mouse:
                             pi * ratio
                         )  # A simple sine curve
                         if swipe_type == "V":
-                            # Is a vertical swipe....
-                            # if the last swipe was horziontal... and in left of screen ... NEGATIVE
-                            #                   and in right of screen ... POSITION
-                            # Else....
-                            #                   in left of screen .. POS
-                            #                   in right of screen NEG
-                            displacement = get_displacement(
-                                displacement,
+                            if is_negative_displacement(
                                 horizontal_last,
                                 current_x,
                                 current_y,
                                 self.x_middle,
                                 self.y_middle,
-                            )
+                            ):
+                                displacement = -displacement
 
                         else:
                             # Reverse displacement if on top half of screen and is a horizontal swipe
@@ -137,14 +133,14 @@ class Mouse:
                         # Else....
                         #                   in left of screen .. POS
                         #                   in right of screen NEG
-                        displacement = get_displacement(
-                            displacement,
+                        if is_negative_displacement(
                             horizontal_last,
                             current_x,
                             current_y,
                             self.x_middle,
                             self.y_middle,
-                        )
+                        ):
+                            displacement = -displacement
                     else:
                         # Reverse displacement if on top half of screen and is a horizontal swipe
                         # Always makes it curve outwards from the middle...
@@ -185,7 +181,7 @@ class Mouse:
             y = self.y_middle + y_move
 
         duration = self.duration
-        extra = False  ################################################ TODO: debug set to True. usually false
+        extra = False
         # Movement type
         if current_x < self.x_middle:
             # Vertical
@@ -235,7 +231,7 @@ class Mouse:
             y = self.y_middle + y_move
 
         duration = self.duration
-        extra = False  ################################################ TODO: debug set to True. usually false
+        extra = False
         # Movement type
         if current_x > self.x_middle:
             # Vertical

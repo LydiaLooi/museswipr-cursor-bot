@@ -7,10 +7,11 @@ RIGHT_PIXEL_Y: 840
 
 DEBOUNCE_DELAY: 0.043
 
+# For determining when to curve swipe
 VERY_FAST_THRESHOLD: 0.8
 
 y_middle: 410
-duration: 120
+duration: 100
 faster_h_duration: 180
 faster_v_duration: 170
 factor: 10000
