@@ -33,6 +33,7 @@ class Mouse:
 
         self.left_h_move_true = config["left_h_move_true"]
         self.right_h_move_true = config["right_h_move_true"]
+        self.y_bias = config["y_bias"]
 
         self.ease_func = easeOutQuad
         print("Mouse initialised.")
@@ -179,10 +180,17 @@ class Mouse:
             # Horizontal
             swipe_type = "H"
             if self.left_h_move_true:
+                # No bias
+                lower = self.y_lower_bound
+                upper = self.y_upper_bound
+                if self.y_bias == 1:
+                    upper = self.y_lower_bound
+                elif self.y_bias == 2:
+                    lower = self.y_upper_bound
                 y = max(
-                    self.y_lower_bound,
-                    min(current_y + randint(-20, 20), self.y_upper_bound),
-                )
+                    lower,
+                    min(current_y, upper),
+                ) + randint(-20, 20)
             iteration = self.h_move_iteration
             if speed == 1:
                 duration = self.faster_h_duration
@@ -222,10 +230,17 @@ class Mouse:
             # Horizontal
             swipe_type = "H"
             if self.right_h_move_true:
+                # No bias
+                lower = self.y_lower_bound
+                upper = self.y_upper_bound
+                if self.y_bias == 1:
+                    upper = self.y_lower_bound
+                elif self.y_bias == 2:
+                    lower = self.y_upper_bound
                 y = max(
-                    self.y_lower_bound,
-                    min(current_y + randint(-20, 20), self.y_upper_bound),
-                )
+                    lower,
+                    min(current_y, upper),
+                ) + randint(-20, 20)
             iteration = self.h_move_iteration
             if speed == 1:
                 duration = self.faster_h_duration

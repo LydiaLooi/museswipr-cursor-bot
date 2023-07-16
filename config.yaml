@@ -1,5 +1,4 @@
-# Slow Config
-# But it's actually pretty good and can do GHOST 1,2x
+# The NEW default config
 LEFT_PIXEL_X: 709
 LEFT_PIXEL_Y: 840
 
@@ -21,3 +20,7 @@ v_move_iteration: 500
 # 0: False 1: True 
 left_h_move_true: 1
 right_h_move_true: 1
+
+# y_bias is only affected on the horizontal swipes that are 'true' horizontal (value above is set to 1)
+# 0 = no bias, 1 = upper bias, 2: lower bias... 
+y_bias: 2 
