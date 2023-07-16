@@ -13,12 +13,17 @@ class Mouse:
     def __init__(self):
         self.should_stop = False
         self.screen_width = GetSystemMetrics(0)
+        self.x_middle = self.screen_width // 2
         self.screen_height = GetSystemMetrics(1)
 
         with open("config.yaml") as config_file:
             config = safe_load(config_file)
 
         self.y_middle = config["y_middle"]
+
+        self.y_lower_bound = self.y_middle - 200
+        self.y_upper_bound = self.y_middle + 200
+
         self.duration = config["duration"]
         self.faster_h_duration = config["faster_h_duration"]
         self.faster_v_duration = config["faster_v_duration"]
@@ -40,7 +45,16 @@ class Mouse:
         print(f"H Move iteration: {self.h_move_iteration}")
         print(f"V Move iteration: {self.v_move_iteration}")
 
-    def _move_straight(self, x, y, iteration, total_steps, extra=False):
+    def _move_straight(
+        self,
+        x,
+        y,
+        iteration,
+        total_steps,
+        swipe_type,
+        extra=False,
+        horizontal_last=True,
+    ):
         current_x, current_y = GetCursorPos()  # Get current mouse position
         early_threshold = total_steps * 0.7
         amplitude = 150  # This controls the curve height
@@ -55,13 +69,24 @@ class Mouse:
                         displacement = amplitude * sin(
                             pi * ratio
                         )  # A simple sine curve
-                        # Reverse displacement if on top half of screen
-                        if current_y < self.y_middle:
-                            displacement = -displacement
+                        if swipe_type == "V":
+                            # Is a vertical swipe....
+                            # if the last swipe was horziontal... and in left of screen ... NEGATIVE
+                            #                   and in right of screen ... POSITION
+                            # Else....
+                            #                   in left of screen .. POS
+                            #                   in right of screen NEG
+                            if (horizontal_last and current_x < self.x_middle) or (
+                                not horizontal_last and current_x > self.x_middle
+                            ):
+                                displacement = -displacement
+                        else:
+                            # Reverse displacement if on top half of screen and is a horizontal swipe
+                            # Always makes it curve outwards from the middle...
+                            if current_y < self.y_middle:
+                                displacement = -displacement
 
-                    dx = abs(x - current_x)
-                    dy = abs(y - current_y)
-                    if dx > dy:
+                    if swipe_type == "H":  # Horizontal movement
                         SetCursorPos(
                             (
                                 int(current_x + (x - current_x) * ratio),
@@ -89,14 +114,24 @@ class Mouse:
                 displacement = 0
                 if extra:
                     displacement = amplitude * sin(pi * ratio)  # A simple sine curve
-                    # Reverse displacement if on top half of screen
-                    if current_y < self.y_middle:
-                        displacement = -displacement
+                    if swipe_type == "V":
+                        # Is a vertical swipe....
+                        # if the last swipe was horziontal... and in left of screen ... NEGATIVE
+                        #                   and in right of screen ... POSITION
+                        # Else....
+                        #                   in left of screen .. POS
+                        #                   in right of screen NEG
+                        if (horizontal_last and current_x < self.x_middle) or (
+                            not horizontal_last and current_x > self.x_middle
+                        ):
+                            displacement = -displacement
+                    else:
+                        # Reverse displacement if on top half of screen and is a horizontal swipe
+                        # Always makes it curve outwards from the middle...
+                        if current_y < self.y_middle:
+                            displacement = -displacement
 
-                # If the X distance is longer, modify the y values. Otherwise, modify the x values.
-                dx = abs(x - current_x)
-                dy = abs(y - current_y)
-                if dx > dy:
+                if swipe_type == "H":  # Horizontal movement
                     SetCursorPos(
                         (
                             int(current_x + (x - current_x) * ratio),
@@ -115,7 +150,7 @@ class Mouse:
                         )
                     )
 
-    def move_left(self, speed=0):
+    def move_left(self, speed=0, last_swipe_horizontal=True):
         current_x, current_y = GetCursorPos()  # Get current mouse position
 
         # implement the action of moving the mouse to the left
@@ -130,10 +165,11 @@ class Mouse:
             y = self.y_middle + y_move
 
         duration = self.duration
-        extra = False
+        extra = False  ################################################ TODO: debug set to True. usually false
         # Movement type
-        if current_x < self.screen_width // 2:
+        if current_x < self.x_middle:
             # Vertical
+            swipe_type = "V"
             iteration = self.v_move_iteration
             if speed == 1:
                 duration = self.faster_v_duration
@@ -141,17 +177,24 @@ class Mouse:
                 extra = True
         else:
             # Horizontal
+            swipe_type = "H"
             if self.left_h_move_true:
-                y = current_y + randint(-20, 20)
+                y = max(
+                    self.y_lower_bound,
+                    min(current_y + randint(-20, 20), self.y_lower_bound),
+                )
             iteration = self.h_move_iteration
             if speed == 1:
                 duration = self.faster_h_duration
             elif speed == 2:
                 extra = True
-        total_steps = int(duration * self.factor)
-        self._move_straight(x, y, iteration, total_steps, extra)
 
-    def move_right(self, speed=0):
+        total_steps = int(duration * self.factor)
+        self._move_straight(
+            x, y, iteration, total_steps, swipe_type, extra, last_swipe_horizontal
+        )
+
+    def move_right(self, speed=0, last_swipe_horizontal=True):
         current_x, current_y = GetCursorPos()  # Get current mouse position
 
         # check self.should_stop after each step and stop if it's True
@@ -165,10 +208,11 @@ class Mouse:
             y = self.y_middle + y_move
 
         duration = self.duration
-        extra = False
+        extra = False  ################################################ TODO: debug set to True. usually false
         # Movement type
-        if current_x > self.screen_width // 2:
+        if current_x > self.x_middle:
             # Vertical
+            swipe_type = "V"
             iteration = self.v_move_iteration
             if speed == 1:
                 duration = self.faster_v_duration
@@ -176,8 +220,12 @@ class Mouse:
                 extra = True
         else:
             # Horizontal
+            swipe_type = "H"
             if self.right_h_move_true:
-                y = current_y + randint(-20, 20)
+                y = max(
+                    self.y_lower_bound,
+                    min(current_y + randint(-20, 20), self.y_lower_bound),
+                )
             iteration = self.h_move_iteration
             if speed == 1:
                 duration = self.faster_h_duration
@@ -185,7 +233,9 @@ class Mouse:
                 extra = True
 
         total_steps = int(duration * self.factor)
-        self._move_straight(x, y, iteration, total_steps, extra)
+        self._move_straight(
+            x, y, iteration, total_steps, swipe_type, extra, last_swipe_horizontal
+        )
 
     def stop(self):
         self.should_stop = True

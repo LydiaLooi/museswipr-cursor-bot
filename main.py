@@ -6,6 +6,7 @@ from mouse import Mouse
 from mouse_invoker import MouseMoveInvoker
 from commands.move import MoveLeftCommand, MoveRightCommand
 from sys import exit
+from win32api import GetCursorPos
 
 from yaml import safe_load
 
@@ -45,6 +46,8 @@ def check_and_move(queue, local_mem):
                     local_mem["speed"] = speed
                 queue.put((direction, local_mem["speed"]))
                 local_mem[direction] = current_time
+
+                # Update the speed in memory
                 local_mem["speed"] = speed
 
 
@@ -68,6 +71,7 @@ if __name__ == "__main__":
             local_mem = manager.dict(
                 {"left": 0, "right": 0, "speed": 0, "check_count": 0}
             )
+            last_swipe_horizontal = True
 
             with Pool(processes=1) as pool:
                 pool.apply_async(check_and_move, (task_queue, local_mem))
@@ -85,14 +89,32 @@ if __name__ == "__main__":
                         print(local_mem)
                     task = task_queue.get()
                     direction, speed = task
-                    # if speed == 2:
-                    #     print(f"Moving {direction} with speed {speed}")
+
+                    current_x, _ = GetCursorPos()  # Get current mouse position
+
                     if direction == "left":
-                        set_command(MoveLeftCommand(mouse, speed))
+                        # Movement type
+                        if current_x < mouse.x_middle:
+                            # Vertical
+                            is_horziontal = False
+                        else:
+                            is_horziontal = True
+                        set_command(
+                            MoveLeftCommand(mouse, speed, last_swipe_horizontal)
+                        )
                     elif direction == "right":
-                        set_command(MoveRightCommand(mouse, speed))
+                        # Movement type
+                        if current_x > mouse.x_middle:
+                            # Vertical
+                            is_horziontal = False
+                        else:
+                            is_horziontal = True
+                        set_command(
+                            MoveRightCommand(mouse, speed, last_swipe_horizontal)
+                        )
                     else:
                         print(f"Something went wrong: {task}")
+                    last_swipe_horizontal = is_horziontal
     except KeyboardInterrupt:
         print("Keyboard interrupt detected.")
         exit(0)  # Exit the program
