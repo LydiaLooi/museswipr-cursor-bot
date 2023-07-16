@@ -1,6 +1,12 @@
 from pyautogui import pixel
-from time import perf_counter
 from PIL import ImageGrab
+
+from yaml import safe_load
+
+with open("config.yaml") as config_file:
+    config = safe_load(config_file)
+
+VERY_FAST_THRESHOLD = config["VERY_FAST_THRESHOLD"]
 
 
 def check_pixel_color(x, y, threshold=20):
@@ -26,7 +32,6 @@ def check_pixel_color_range(start_x, start_y, end_x, end_y, num_pixels, threshol
     # screenshot.save("screenshot.png")
 
     very_fast_range = screenshot.height - 105
-    very_fast_threshold = 0.7  # 0.9
 
     top = very_fast_range
     bottom = screenshot.height
@@ -41,8 +46,8 @@ def check_pixel_color_range(start_x, start_y, end_x, end_y, num_pixels, threshol
         if screenshot.getpixel((-1, y)) > threshold:
             solid["R"] += 1
 
-    if ((solid["L"] / very_fast_range) >= very_fast_threshold) or (
-        (solid["R"] / very_fast_range) >= very_fast_threshold
+    if ((solid["L"] / very_fast_range) >= VERY_FAST_THRESHOLD) or (
+        (solid["R"] / very_fast_range) >= VERY_FAST_THRESHOLD
     ):
         # screenshot.save(f"{perf_counter()}.png")
         return 2

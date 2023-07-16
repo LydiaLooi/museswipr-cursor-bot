@@ -5,7 +5,9 @@ LEFT_PIXEL_Y: 840
 RIGHT_PIXEL_X: 1216
 RIGHT_PIXEL_Y: 840
 
-DEBOUNCE_DELAY: 0.0425
+DEBOUNCE_DELAY: 0.043
+
+VERY_FAST_THRESHOLD: 0.8
 
 y_middle: 410
 duration: 120
@@ -23,4 +25,4 @@ right_h_move_true: 1
 
 # y_bias is only affected on the horizontal swipes that are 'true' horizontal (value above is set to 1)
 # 0 = no bias, 1 = upper bias, 2: lower bias... 
-y_bias: 2 
+y_bias: 2

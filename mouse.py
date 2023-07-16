@@ -77,8 +77,18 @@ class Mouse:
                             # Else....
                             #                   in left of screen .. POS
                             #                   in right of screen NEG
-                            if (horizontal_last and current_x < self.x_middle) or (
-                                not horizontal_last and current_x > self.x_middle
+                            if horizontal_last and current_x < self.x_middle:
+                                displacement = -displacement
+                            elif (
+                                not horizontal_last
+                                and current_x > self.x_middle
+                                and current_y > self.y_middle
+                            ):
+                                displacement = -displacement
+                            elif (
+                                not horizontal_last
+                                and current_x < self.x_middle
+                                and current_y < self.y_middle
                             ):
                                 displacement = -displacement
                         else:
@@ -122,8 +132,18 @@ class Mouse:
                         # Else....
                         #                   in left of screen .. POS
                         #                   in right of screen NEG
-                        if (horizontal_last and current_x < self.x_middle) or (
-                            not horizontal_last and current_x > self.x_middle
+                        if horizontal_last and current_x < self.x_middle:
+                            displacement = -displacement
+                        elif (
+                            not horizontal_last
+                            and current_x > self.x_middle
+                            and current_y > self.y_middle
+                        ):
+                            displacement = -displacement
+                        elif (
+                            not horizontal_last
+                            and current_x < self.x_middle
+                            and current_y < self.y_middle
                         ):
                             displacement = -displacement
                     else:
